@@ -1,3 +1,5 @@
+import triangleWgsl from "../shaders/triangle.wgsl";
+
 const init = async (): Promise<any> => {
   // ~~ INITIALIZE ~~ Make sure we can initialize WebGPU
   if (!navigator.gpu) {
@@ -69,28 +71,7 @@ const init = async (): Promise<any> => {
 
   // ~~ DEFINE BASIC SHADERS ~~
   const shaderModule = device.createShaderModule({
-    code: `
-              struct VertexOut {
-                  @builtin(position) position : vec4<f32>,
-                  @location(0) color : vec4<f32>,
-              };
-
-              @stage(vertex)
-              fn vertex_main(@location(0) position: vec4<f32>,
-                          @location(1) color: vec4<f32>) -> VertexOut
-              {
-                  var output : VertexOut;
-                  output.position = position;
-                  output.color = color;
-                  return output;
-              }
-
-              @stage(fragment)
-              fn fragment_main(fragData: VertexOut) -> @location(0) vec4<f32>
-              {
-                  return fragData.color;
-              }
-          `,
+    code: triangleWgsl,
   });
 
   // ~~ CREATE RENDER PIPELINE ~~
