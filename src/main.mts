@@ -40,7 +40,14 @@ const init = async (): Promise<any> => {
   // ~~ SETUP VERTICES (position (vec3<f32>), color(vec4<i32>)) ~~
   // Pack them all into one array
   // Each vertex has a position and a color packed in memory in X Y Z W R G B A order
-  const vertices = new Float32Array([-1.0, -1.0, 0, 1, 1, 0, 0, 1, -0.0, 1.0, 0, 1, 0, 1, 0, 1, 1.0, -1.0, 0, 1, 0, 0, 1, 1]);
+  const vertices = new Float32Array([
+    // p0
+    -1.0, -1.0, 0, 1, 1, 0, 0, 1,
+    // p1
+    -0.0, 1.0, 0, 1, 0, 1, 0, 1,
+    // p2
+    1.0, -1.0, 0, 1, 0, 0, 1, 1,
+  ]);
 
   const vertexBuffer = device.createBuffer({
     size: vertices.byteLength,
@@ -56,16 +63,16 @@ const init = async (): Promise<any> => {
         {
           shaderLocation: 0,
           offset: 0,
-          format: "float32x4",
+          format: "float32x4" as const,
         },
         {
           shaderLocation: 1,
           offset: 16,
-          format: "float32x4",
+          format: "float32x4" as const,
         },
       ],
       arrayStride: 32,
-      stepMode: "vertex",
+      stepMode: "vertex" as const,
     },
   ];
 
@@ -101,8 +108,8 @@ const init = async (): Promise<any> => {
     colorAttachments: [
       {
         clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
-        loadOp: "clear",
-        storeOp: "store",
+        loadOp: "clear" as const,
+        storeOp: "store" as const,
         view: context.getCurrentTexture().createView(),
       },
     ],
