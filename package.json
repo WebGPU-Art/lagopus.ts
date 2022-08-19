@@ -1,0 +1,7 @@
+{
+  "devDependencies": {
+    "@webgpu/types": "^0.1.21",
+    "prettier": "^2.7.1",
+    "vite": "^3.0.8"
+  }
+}
