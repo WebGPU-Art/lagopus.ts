@@ -1,3 +1,4 @@
+import { LagopusElement } from "./primes.mjs";
 import { atomDepthTexture, atomContext, atomDevice } from "./global.mjs";
 
 export const initializeContext = async (): Promise<any> => {
@@ -172,4 +173,12 @@ export let createRenderer = (
   passEncoder.end();
 
   return commandEncoder.finish();
+};
+
+export let collectBuffers = (el: LagopusElement, buffers: GPUCommandBuffer[]) => {
+  if (el.type === "object") {
+    buffers.push(el.buffer);
+  } else {
+    el.children.forEach((child) => collectBuffers(child, buffers));
+  }
 };
