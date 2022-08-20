@@ -116,10 +116,54 @@ export let createRenderer = (
     code: shaderCode,
   });
 
+  // create uniforms
+  // based on code from https://alain.xyz/blog/raw-webgpu
+
+  // 👔 Uniform Data
+  const uniformData = new Float32Array([
+    // ♟️ ModelViewProjection Matrix (Identity)
+    1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+
+    // 🔴 Primary Color
+    0.9, 0.1, 0.3, 1.0,
+
+    // 🟣 Accent Color
+    0.8, 0.2, 0.8, 1.0,
+  ]);
+
+  let uniformBuffer: GPUBuffer = null;
+
+  uniformBuffer = createBuffer(uniformData, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST);
+
+  let uniformBindGroupLayout = device.createBindGroupLayout({
+    entries: [
+      {
+        binding: 0,
+        visibility: GPUShaderStage.VERTEX,
+        buffer: {}, // TODO don't know why, but fixes, https://programmer.ink/think/several-best-practices-of-webgpu.html
+      },
+    ],
+  });
+
+  let uniformBindGroup = device.createBindGroup({
+    layout: uniformBindGroupLayout,
+    entries: [
+      {
+        binding: 0,
+        resource: {
+          buffer: uniformBuffer,
+        },
+      },
+    ],
+  });
+
+  const pipelineLayoutDesc = { bindGroupLayouts: [uniformBindGroupLayout] };
+  let renderLayout = device.createPipelineLayout(pipelineLayoutDesc);
+
   // ~~ CREATE RENDER PIPELINE ~~
   const presentationFormat = window.navigator.gpu.getPreferredCanvasFormat();
   const pipeline = device.createRenderPipeline({
-    layout: "auto",
+    layout: renderLayout,
     vertex: {
       module: shaderModule,
       entryPoint: "vertex_main",
@@ -167,6 +211,7 @@ export let createRenderer = (
   const commandEncoder = device.createCommandEncoder();
   const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
 
+  passEncoder.setBindGroup(0, uniformBindGroup);
   passEncoder.setPipeline(pipeline);
   passEncoder.setVertexBuffer(0, vertexBuffer);
   passEncoder.draw(3);
@@ -181,4 +226,21 @@ export let collectBuffers = (el: LagopusElement, buffers: GPUCommandBuffer[]) =>
   } else {
     el.children.forEach((child) => collectBuffers(child, buffers));
   }
+};
+
+// 👋 Helper function for creating GPUBuffer(s) out of Typed Arrays
+const createBuffer = (arr: Float32Array | Uint16Array, usage: number) => {
+  // 📏 Align to 4 bytes (thanks @chrimsonite)
+  let desc = {
+    size: (arr.byteLength + 3) & ~3,
+    usage,
+    mappedAtCreation: true,
+  };
+  let device = atomDevice.deref();
+  let buffer = device.createBuffer(desc);
+
+  const writeArray = arr instanceof Uint16Array ? new Uint16Array(buffer.getMappedRange()) : new Float32Array(buffer.getMappedRange());
+  writeArray.set(arr);
+  buffer.unmap();
+  return buffer;
 };
