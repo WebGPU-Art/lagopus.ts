@@ -15,9 +15,9 @@ export let compContainer = (): LagopusElement => {
         { field: "color", format: "float32x4", size: 4 },
       ],
       data: [
-        { position: [-1.0, -1.0, 0.3, 1], color: [1, 0, 0, 1] },
-        { position: [-0.0, 1.0, 0.3, 1], color: [1, 1, 0, 1] },
-        { position: [1.0, -1.0, 0.3, 1], color: [0, 0, 1, 1] },
+        { position: [-100.0, -100.0, 0.3, 1], color: [1, 0, 0, 1] },
+        { position: [-0.0, 100.0, 0.3, 1], color: [1, 1, 0, 1] },
+        { position: [100.0, -100.0, 0.3, 1], color: [0, 0, 1, 1] },
       ],
     }),
 
@@ -29,9 +29,9 @@ export let compContainer = (): LagopusElement => {
         { field: "color", format: "float32x4", size: 4 },
       ],
       data: [
-        { position: [-1.0, 1.0, 0.4, 1], color: [1, 0, 0, 1] },
-        { position: [-0.0, -1.0, 0.4, 1], color: [1, 1, 0, 1] },
-        { position: [1.0, 1.0, 0.4, 1], color: [0, 0, 1, 1] },
+        { position: [-100.0, 100.0, 0.4, 1], color: [1, 0, 0, 1] },
+        { position: [-0.0, -100.0, 0.4, 1], color: [1, 1, 0, 1] },
+        { position: [100.0, 100.0, 0.4, 1], color: [0, 0, 1, 1] },
       ],
     })
   );

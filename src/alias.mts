@@ -9,10 +9,5 @@ export let group = (options: any, ...children: any[]): LagopusGroup => {
 };
 
 export let object = (options: LagopusObjectOptions): LagopusObjectData => {
-  let buffer = createRenderer(options.shader, options.topology, options.attrsList, options.data);
-
-  return {
-    type: "object",
-    buffer,
-  };
+  return createRenderer(options.shader, options.topology, options.attrsList, options.data);
 };

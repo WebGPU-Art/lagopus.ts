@@ -1,20 +1,25 @@
-import { atomDevice } from "./global.mjs";
+import { atomBufferNeedClear, atomDevice, atomLagopusTree } from "./global.mjs";
 import { initializeContext, collectBuffers } from "./render.mjs";
 
 import { compContainer } from "./app/container.mjs";
+import { renderControl, startControlLoop } from "./touch-control.mjs";
+import { onControlEvent, paintApp } from "./control.mjs";
 
 function renderApp() {
-  let bufferList: GPUCommandBuffer[] = [];
   let tree = compContainer();
-  collectBuffers(tree, bufferList);
-
-  // load shared device
-  let device = atomDevice.deref();
-  device.queue.submit(bufferList);
+  atomLagopusTree.reset(tree);
 }
 
 window.onload = async () => {
   await initializeContext();
   renderApp();
+  paintApp();
   console.log("loaded");
+
+  renderControl();
+  startControlLoop(10, onControlEvent);
+
+  window.onresize = () => {
+    paintApp();
+  };
 };
