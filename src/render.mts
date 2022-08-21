@@ -222,7 +222,7 @@ let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
   const renderPassDescriptor = {
     colorAttachments: [
       {
-        // clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
+        clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
         loadOp: (needClear ? "clear" : "load") as GPULoadOp,
         storeOp: "store" as GPUStoreOp,
         view: null as GPUTextureView,

@@ -16,8 +16,8 @@ export let compContainer = (): LagopusElement => {
       ],
       data: [
         { position: [-100.0, -100.0, 0.3, 1], color: [1, 0, 0, 1] },
-        { position: [-0.0, 100.0, 0.3, 1], color: [1, 1, 0, 1] },
-        { position: [100.0, -100.0, 0.3, 1], color: [0, 0, 1, 1] },
+        { position: [-0.0, 100.0, 300, 1], color: [1, 1, 0, 1] },
+        { position: [100.0, -100.0, -300, 1], color: [0, 0, 1, 1] },
       ],
     }),
 
