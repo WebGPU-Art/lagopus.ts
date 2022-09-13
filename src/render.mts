@@ -2,6 +2,7 @@ import { LagopusElement, LagopusObjectData } from "./primes.mjs";
 import { atomDepthTexture, atomContext, atomDevice, atomBufferNeedClear } from "./global.mjs";
 import { coneBackScale } from "./config.mjs";
 import { atomViewerPosition, atomViewerUpward, newLookatPoint } from "./perspective.mjs";
+import { vNormalize, vCross, vLength } from "./quaternion.mjs";
 
 export const initializeContext = async (): Promise<any> => {
   // ~~ INITIALIZE ~~ Make sure we can initialize WebGPU
@@ -136,21 +137,27 @@ let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
   // create uniforms
   // based on code from https://alain.xyz/blog/raw-webgpu
 
+  let lookAt = newLookatPoint();
+  let forward = vNormalize(lookAt);
+  let rightward = vCross(forward, atomViewerUpward.deref());
   // 👔 Uniform Data
   const uniformData = new Float32Array([
     // coneBackScale
     coneBackScale,
     // viewportRatio
     window.innerHeight / window.innerWidth,
+    vLength(lookAt),
     // alignment
     0,
-    0,
     // lookpoint
-    ...newLookatPoint(),
+    ...forward,
     // alignment
     0,
     // upwardDirection
     ...atomViewerUpward.deref(),
+    // alignment
+    0,
+    ...rightward,
     // alignment
     0,
     // cameraPosition
