@@ -1,9 +1,11 @@
 struct UBO {
   coneBackScale: f32,
   viewportRatio: f32,
-  lookPoint: vec3<f32>,
+  lookDistance: f32,
+  forward: vec3<f32>,
   // direction up overhead, better unit vector
-  upwardDirection: vec3<f32>,
+  upward: vec3<f32>,
+  rightward: vec3<f32>,
   cameraPosition: vec3<f32>,
 };
 
@@ -19,18 +21,17 @@ struct PointResult {
 };
 
 fn transform_perspective(p: vec3<f32>) -> PointResult {
-  let lookPoint = uniforms.lookPoint;
-  let upwardDirection = uniforms.upwardDirection;
+  let forward = uniforms.forward;
+  let upward = uniforms.upward;
+  let rightward = uniforms.rightward;
+  let lookDistance = uniforms.lookDistance;
   let cameraPosition = uniforms.cameraPosition;
 
   let moved_point: vec3<f32> = p - cameraPosition;
-  // trying to get right direction at length 1
-  let rightward: vec3<f32> = cross(upwardDirection, lookPoint) / 600.0;
 
   let s: f32 = uniforms.coneBackScale;
 
-  let square_length: f32 = lookPoint.x*lookPoint.x + lookPoint.y*lookPoint.y + lookPoint.z*lookPoint.z;
-  let r: f32 = dot(moved_point, lookPoint) / square_length;
+  let r: f32 = dot(moved_point, forward) / lookDistance;
 
   // if (r < (s * -0.9)) {
   //   // make it disappear with depth test since it's probably behind the camera
@@ -38,8 +39,8 @@ fn transform_perspective(p: vec3<f32>) -> PointResult {
   // }
 
   let screen_scale: f32 = (s + 1.0) / (r + s);
-  let y_next: f32 = dot(moved_point, upwardDirection) * screen_scale;
-  let x_next: f32 = - dot(moved_point, rightward) * screen_scale;
+  let y_next: f32 = dot(moved_point, upward) * screen_scale;
+  let x_next: f32 = dot(moved_point, rightward) * screen_scale;
   let z_next: f32 = r;
 
   return PointResult(
