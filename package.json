@@ -1,8 +1,8 @@
 {
   "devDependencies": {
-    "@webgpu/types": "^0.1.21",
-    "prettier": "^2.7.1",
-    "vite": "^3.0.8",
-    "vite-plugin-glsl": "^0.3.0"
+    "@webgpu/types": "^0.1.27",
+    "prettier": "^2.8.4",
+    "vite": "^4.1.4",
+    "vite-plugin-glsl": "^1.1.2"
   }
 }
