@@ -2,7 +2,7 @@ import { moveViewerBy, rotateGlanceBy, spinGlanceBy } from "./perspective.mjs";
 import { V2 } from "./primes.mjs";
 import { atomBufferNeedClear, atomDevice, atomLagopusTree } from "./global.mjs";
 import { collectBuffers } from "./render.mjs";
-import { ControlStates } from "./touch-control.mjs";
+import { ControlStates } from "@triadica/touch-control";
 
 export function paintApp() {
   atomBufferNeedClear.reset(true);

@@ -121,6 +121,11 @@
     estree-walker "^2.0.2"
     picomatch "^2.3.1"
 
+"@triadica/touch-control@^0.0.1-a3":
+  version "0.0.1-a3"
+  resolved "https://registry.yarnpkg.com/@triadica/touch-control/-/touch-control-0.0.1-a3.tgz#cbe049773ae8b566ba0b28cd038cfad7ea3f0918"
+  integrity sha512-/Jm7PwbrbHTW9YNP8uo043qnNw1LjLtWro6EADLattNe18FOJ7L08B2zfgFhx5L9uLuQNHE3ghAJ2S7QF3/6Dw==
+
 "@types/estree@^1.0.0":
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-1.0.0.tgz#5fb2e536c1ae9bf35366eed879e827fa59ca41c2"

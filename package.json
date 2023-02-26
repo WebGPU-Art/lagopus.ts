@@ -1,8 +1,13 @@
 {
+  "name": "@triadica/lagopus",
+  "version": "0.0.1",
   "devDependencies": {
     "@webgpu/types": "^0.1.27",
     "prettier": "^2.8.4",
     "vite": "^4.1.4",
     "vite-plugin-glsl": "^1.1.2"
+  },
+  "dependencies": {
+    "@triadica/touch-control": "^0.0.1-a3"
   }
 }
