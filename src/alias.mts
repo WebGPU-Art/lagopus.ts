@@ -8,8 +8,23 @@ export let group = (options: any, ...children: any[]): LagopusGroup => {
   };
 };
 
+/** create a render object */
 export let object = (options: LagopusObjectOptions): LagopusObjectData => {
-  return createRenderer(options.shader, options.topology, options.attrsList, options.data);
+  let { attrsList, data } = options;
+
+  // extra array, extra cost
+  let tmp: number[] = [];
+  for (let i = 0; i < data.length; i++) {
+    for (let a = 0; a < attrsList.length; a++) {
+      tmp.push(...data[i][attrsList[a].field]);
+    }
+  }
+  let vertices = new Float32Array(tmp.length);
+  for (let i = 0; i < tmp.length; i++) {
+    vertices[i] = tmp[i];
+  }
+
+  return createRenderer(options.shader, options.topology, options.attrsList, data.length, vertices);
 };
 
 export type NestedData<T> = NestedData<T>[] | T;

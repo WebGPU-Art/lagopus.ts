@@ -70,22 +70,11 @@ export let createRenderer = (
     /** defaults to 4 for `float32` since 32=8*4, would change for other types */
     unitSize?: number;
   }[],
-  data: Record<string, number[]>[]
+  verticesLength: number,
+  vertices: Float32Array
 ): LagopusObjectData => {
   // load shared device
   let device = atomDevice.deref();
-
-  // extra array, extra cost
-  let tmp: number[] = [];
-  for (let i = 0; i < data.length; i++) {
-    for (let a = 0; a < attrsList.length; a++) {
-      tmp.push(...data[i][attrsList[a].field]);
-    }
-  }
-  let vertices = new Float32Array(tmp.length);
-  for (let i = 0; i < tmp.length; i++) {
-    vertices[i] = tmp[i];
-  }
 
   const vertexBuffer = device.createBuffer({
     size: vertices.byteLength,
@@ -127,7 +116,7 @@ export let createRenderer = (
     shaderModule: shaderModule,
     vertexBuffersDescriptors: vertexBuffersDescriptors,
     vertexBuffer: vertexBuffer,
-    length: data.length,
+    length: verticesLength,
   };
 };
 
