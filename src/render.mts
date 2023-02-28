@@ -110,6 +110,11 @@ export let createRenderer = (
     code: shaderCode,
   });
 
+  shaderModule.compilationInfo().then((e) => {
+    // a dirty hook to expose build messages
+    globalThis.__lagopusHandleCompilationInfo?.(e, shaderCode);
+  });
+
   return {
     type: "object",
     topology: topology,

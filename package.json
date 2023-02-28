@@ -1,6 +1,6 @@
 {
   "name": "@triadica/lagopus",
-  "version": "0.0.1-a2",
+  "version": "0.0.1-a3",
   "scripts": {
     "compile": "rm -rfv lib/* && tsc -d --project tsconfig.json --outDir lib/",
     "prepare": "yarn compile"
