@@ -1,0 +1,13 @@
+
+.github
+.prettierrc
+node_modules
+assets
+index.html
+tsconfig.json
+vite.config.mjs
+yarn.lock
+
+yarn-error.log
+
+dist/

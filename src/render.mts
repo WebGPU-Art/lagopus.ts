@@ -41,6 +41,7 @@ export const initializeContext = async (): Promise<any> => {
   context.configure({
     device,
     format: presentationFormat,
+    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
     alphaMode: "premultiplied",
   });
 
@@ -49,8 +50,11 @@ export const initializeContext = async (): Promise<any> => {
 
   const depthTexture = device.createTexture({
     size: [window.innerWidth * devicePixelRatio, window.innerHeight * devicePixelRatio],
-    format: "depth24plus",
-    usage: GPUTextureUsage.RENDER_ATTACHMENT,
+    // format: "depth24plus",
+    // usage: GPUTextureUsage.RENDER_ATTACHMENT,
+    dimension: "2d",
+    format: "depth24plus-stencil8",
+    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
   });
 
   atomDepthTexture.reset(depthTexture);
@@ -218,8 +222,8 @@ let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
     },
     depthStencil: {
       depthWriteEnabled: true,
-      depthCompare: "greater",
-      format: "depth24plus",
+      depthCompare: "less",
+      format: "depth24plus-stencil8",
     },
   });
 
@@ -237,9 +241,12 @@ let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
     ],
     depthStencilAttachment: {
       view: null as GPUTextureView,
-      depthClearValue: 0.0,
+      depthClearValue: 1,
       depthLoadOp: (needClear ? "clear" : "load") as GPULoadOp,
       depthStoreOp: "store" as GPUStoreOp,
+      stentialClearValue: 0,
+      stencilLoadOp: "clear" as GPULoadOp,
+      stencilStoreOp: "store" as GPUStoreOp,
     },
   };
 

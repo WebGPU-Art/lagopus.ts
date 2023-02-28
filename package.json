@@ -1,8 +1,18 @@
 {
+  "name": "@triadica/lagopus",
+  "version": "0.0.1-a1",
+  "scripts": {
+    "compile": "rm -rfv lib/* && tsc -d --project tsconfig.json --outDir lib/",
+    "prepare": "yarn compile"
+  },
   "devDependencies": {
     "@webgpu/types": "^0.1.27",
     "prettier": "^2.8.4",
+    "typescript": "^4.9.5",
     "vite": "^4.1.4",
     "vite-plugin-glsl": "^1.1.2"
+  },
+  "dependencies": {
+    "@triadica/touch-control": "^0.0.1-a3"
   }
 }
