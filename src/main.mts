@@ -22,4 +22,13 @@ window.onload = async () => {
   window.onresize = () => {
     paintApp();
   };
+
+  window.__lagopusHandleCompilationInfo = (e, code) => {
+    console.error(e);
+  };
 };
+
+declare global {
+  /** dirty hook for extracting error messages */
+  var __lagopusHandleCompilationInfo: (info: GPUCompilationInfo, code: string) => void;
+}
