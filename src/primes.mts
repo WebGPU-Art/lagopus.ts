@@ -20,6 +20,7 @@ export interface LagopusObjectOptions {
   topology: GPUPrimitiveTopology;
   attrsList: LagopusAttribute[];
   data: Record<string, number[]>[];
+  hitRegion?: LagopusHitRegion;
 }
 
 export interface LagopusObjectData {
@@ -29,6 +30,7 @@ export interface LagopusObjectData {
   shaderModule: GPUShaderModule;
   vertexBuffer: GPUBuffer;
   length: number;
+  hitRegion?: LagopusHitRegion;
 }
 
 export interface LagopusGroup {
@@ -37,3 +39,17 @@ export interface LagopusGroup {
 }
 
 export type LagopusElement = LagopusGroup | LagopusObjectData;
+
+/** hitRegion information for object element */
+export interface LagopusHitRegion {
+  radius: number;
+  position: V3;
+  onHit?: (e: MouseEvent, d: (op: string, data: any) => void) => void;
+  onMousedown?: (e: MouseEvent, d: (op: string, data: any) => void) => void;
+  onMousemove?: (e: MouseEvent, d: (op: string, data: any) => void) => void;
+  onMouseup?: (e: MouseEvent, d: (op: string, data: any) => void) => void;
+}
+
+export interface LagopusObjectBuffer {
+  hitRegion?: LagopusHitRegion;
+}

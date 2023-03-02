@@ -1,4 +1,4 @@
-import { LagopusElement, LagopusObjectData } from "./primes.mjs";
+import { LagopusElement, LagopusHitRegion, LagopusObjectData } from "./primes.mjs";
 import { atomDepthTexture, atomContext, atomDevice, atomBufferNeedClear } from "./global.mjs";
 import { coneBackScale } from "./config.mjs";
 import { atomViewerPosition, atomViewerUpward, newLookatPoint } from "./perspective.mjs";
@@ -71,7 +71,8 @@ export let createRenderer = (
     unitSize?: number;
   }[],
   verticesLength: number,
-  vertices: Float32Array
+  vertices: Float32Array,
+  hitRegion: LagopusHitRegion
 ): LagopusObjectData => {
   // load shared device
   let device = atomDevice.deref();
@@ -122,6 +123,7 @@ export let createRenderer = (
     vertexBuffersDescriptors: vertexBuffersDescriptors,
     vertexBuffer: vertexBuffer,
     length: verticesLength,
+    hitRegion: hitRegion,
   };
 };
 

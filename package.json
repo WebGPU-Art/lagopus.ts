@@ -1,6 +1,6 @@
 {
   "name": "@triadica/lagopus",
-  "version": "0.0.1-a3",
+  "version": "0.0.1-a4",
   "scripts": {
     "compile": "rm -rfv lib/* && tsc -d --project tsconfig.json --outDir lib/",
     "prepare": "yarn compile"
@@ -13,6 +13,7 @@
     "vite-plugin-glsl": "^1.1.2"
   },
   "dependencies": {
-    "@triadica/touch-control": "^0.0.1-a3"
+    "@triadica/touch-control": "^0.0.1-a3",
+    "ismobilejs": "^1.1.1"
   }
 }
