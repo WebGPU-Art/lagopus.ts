@@ -2,7 +2,7 @@ import triangleWgsl from "../../shaders/triangle.wgsl";
 
 import { flattenData, group, object } from "../alias.mjs";
 import { LagopusElement, V3 } from "../primes.mjs";
-import { compButton, compSlider, compDragPoint } from "../comp/bottom.mjs";
+import { compButton, compSlider, compDragPoint } from "../comp/button.mjs";
 
 export let compContainer = (store: { position: V3 }): LagopusElement => {
   return group(
@@ -21,6 +21,7 @@ export let compContainer = (store: { position: V3 }): LagopusElement => {
         { position: [100.0, -100.0, -100, 1], color: [0, 0, 1, 1] },
       ],
     }),
+    null,
     object({
       shader: triangleWgsl,
       topology: "triangle-list",

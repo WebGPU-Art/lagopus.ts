@@ -1,9 +1,8 @@
-import { atomBufferNeedClear, atomDevice, atomLagopusTree, atomObjectsTree, atomProxiedDispatch } from "./global.mjs";
-import { initializeContext, collectBuffers } from "./render.mjs";
+import { initializeContext, paintLagopusTree, renderLagopusTree } from "./render.mjs";
 
 import { compContainer } from "./app/container.mjs";
 import { renderControl, startControlLoop } from "@triadica/touch-control";
-import { onControlEvent, paintApp } from "./control.mjs";
+import { onControlEvent } from "./control.mjs";
 import { setupMouseEvents } from "./events.mjs";
 import { Atom } from "./atom.mjs";
 import { V3 } from "./primes.mjs";
@@ -23,23 +22,20 @@ let dispatch = (op: string, data: any) => {
 
 function renderApp() {
   let tree = compContainer(store.deref());
-  atomLagopusTree.reset(tree);
-  atomProxiedDispatch.reset(dispatch);
-  atomObjectsTree.reset(tree);
-  paintApp();
+
+  renderLagopusTree(tree, dispatch);
 }
 
 window.onload = async () => {
   await initializeContext();
   renderApp();
-  paintApp();
   console.log("loaded");
 
   renderControl();
   startControlLoop(10, onControlEvent);
 
   window.onresize = () => {
-    paintApp();
+    paintLagopusTree();
   };
 
   window.__lagopusHandleCompilationInfo = (e, code) => {

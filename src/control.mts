@@ -1,19 +1,7 @@
 import { moveViewerBy, rotateGlanceBy, spinGlanceBy } from "./perspective.mjs";
 import { V2 } from "./primes.mjs";
-import { atomBufferNeedClear, atomDevice, atomLagopusTree } from "./global.mjs";
-import { collectBuffers } from "./render.mjs";
 import { ControlStates } from "@triadica/touch-control";
-
-export function paintApp() {
-  atomBufferNeedClear.reset(true);
-  let tree = atomLagopusTree.deref();
-  let bufferList: GPUCommandBuffer[] = [];
-  collectBuffers(tree, bufferList);
-
-  // load shared device
-  let device = atomDevice.deref();
-  device.queue.submit(bufferList);
-}
+import { paintLagopusTree } from "./render.mjs";
 
 export let onControlEvent = (elapsed: number, states: ControlStates, delta: ControlStates) => {
   let lMove = states.leftMove.map(refineStrength) as V2;
@@ -40,7 +28,7 @@ export let onControlEvent = (elapsed: number, states: ControlStates, delta: Cont
     spinGlanceBy(-0.05 * elapsed * rMove[0]);
   }
   if (!isZero(lMove) || !isZero(rMove)) {
-    paintApp();
+    paintLagopusTree();
   }
 };
 
@@ -51,3 +39,8 @@ let isZero = (v: V2): boolean => {
 let refineStrength = (x: number): number => {
   return x * Math.sqrt(Math.abs(x * 0.02));
 };
+
+/** function to catch shader compilation errors */
+export function registerShaderResult(f: (e: GPUCompilationInfo, code: string) => void) {
+  window.__lagopusHandleCompilationInfo = f;
+}
