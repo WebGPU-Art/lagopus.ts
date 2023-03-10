@@ -1,9 +1,10 @@
-import { LagopusElement, LagopusObjectData } from "./primes.mjs";
-import { atomDepthTexture, atomContext, atomDevice, atomBufferNeedClear } from "./global.mjs";
+import { LagopusElement, LagopusHitRegion, LagopusObjectData } from "./primes.mjs";
+import { atomDepthTexture, atomContext, atomDevice, atomBufferNeedClear, atomLagopusTree, atomProxiedDispatch, atomObjectsTree } from "./global.mjs";
 import { coneBackScale } from "./config.mjs";
 import { atomViewerPosition, atomViewerUpward, newLookatPoint } from "./perspective.mjs";
 import { vNormalize, vCross, vLength } from "./quaternion.mjs";
 
+/** init canvas context */
 export const initializeContext = async (): Promise<any> => {
   // ~~ INITIALIZE ~~ Make sure we can initialize WebGPU
   if (!navigator.gpu) {
@@ -60,6 +61,7 @@ export const initializeContext = async (): Promise<any> => {
   atomDepthTexture.reset(depthTexture);
 };
 
+/** prepare vertex buffer from object */
 export let createRenderer = (
   shaderCode: string,
   topology: GPUPrimitiveTopology,
@@ -71,7 +73,8 @@ export let createRenderer = (
     unitSize?: number;
   }[],
   verticesLength: number,
-  vertices: Float32Array
+  vertices: Float32Array,
+  hitRegion: LagopusHitRegion
 ): LagopusObjectData => {
   // load shared device
   let device = atomDevice.deref();
@@ -122,6 +125,7 @@ export let createRenderer = (
     vertexBuffersDescriptors: vertexBuffersDescriptors,
     vertexBuffer: vertexBuffer,
     length: verticesLength,
+    hitRegion: hitRegion,
   };
 };
 
@@ -261,6 +265,7 @@ let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
 };
 
 export let collectBuffers = (el: LagopusElement, buffers: GPUCommandBuffer[]) => {
+  if (el == null) return;
   if (el.type === "object") {
     buffers.push(buildCommandBuffer(el));
   } else {
@@ -285,3 +290,23 @@ const createBuffer = (arr: Float32Array | Uint16Array, usage: number) => {
   buffer.unmap();
   return buffer;
 };
+
+/** send command buffer to device and render */
+export function paintLagopusTree() {
+  atomBufferNeedClear.reset(true);
+  let tree = atomLagopusTree.deref();
+  let bufferList: GPUCommandBuffer[] = [];
+  collectBuffers(tree, bufferList);
+
+  // load shared device
+  let device = atomDevice.deref();
+  device.queue.submit(bufferList);
+}
+
+/** track tree, internally it calls `paintLagopusTree` to render */
+export function renderLagopusTree(tree: LagopusElement, dispatch: (op: any, data: any) => void) {
+  atomLagopusTree.reset(tree);
+  atomProxiedDispatch.reset(dispatch);
+  atomObjectsTree.reset(tree);
+  paintLagopusTree();
+}

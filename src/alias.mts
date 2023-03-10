@@ -24,7 +24,7 @@ export let object = (options: LagopusObjectOptions): LagopusObjectData => {
     vertices[i] = tmp[i];
   }
 
-  return createRenderer(options.shader, options.topology, options.attrsList, data.length, vertices);
+  return createRenderer(options.shader, options.topology, options.attrsList, data.length, vertices, options.hitRegion);
 };
 
 export type NestedData<T> = NestedData<T>[] | T;
