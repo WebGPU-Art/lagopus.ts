@@ -113,7 +113,7 @@ export let createRenderer = (
     code: shaderCode,
   });
 
-  shaderModule.compilationInfo().then((e) => {
+  shaderModule.getCompilationInfo().then((e) => {
     // a dirty hook to expose build messages
     globalThis.__lagopusHandleCompilationInfo?.(e, shaderCode);
   });
