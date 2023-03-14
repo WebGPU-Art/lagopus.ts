@@ -95,6 +95,8 @@ export let createRenderer = (
   //   { shaderLocation: 1, offset: 16, format: "float32x4" as GPUVertexFormat },
   // ];
 
+  const stride = attrsList.reduce((acc, info) => acc + info.size * (info.unitSize || 4), 0);
+
   const vertexBuffersDescriptors = [
     {
       attributes: attrsList.map((info, idx) => {
@@ -103,7 +105,7 @@ export let createRenderer = (
         offsetCollect += size * (info.unitSize || 4);
         return { shaderLocation: idx, offset, format };
       }),
-      arrayStride: 32,
+      arrayStride: stride,
       stepMode: "vertex" as GPUVertexStepMode,
     },
   ];
