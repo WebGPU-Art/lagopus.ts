@@ -1,4 +1,4 @@
-export { group, object } from "./alias.mjs";
+export { group, object, u32buffer, newBufferFormatLength } from "./alias.mjs";
 
 export { createRenderer, initializeContext, paintLagopusTree, renderLagopusTree } from "./render.mjs";
 

@@ -13,21 +13,7 @@ export let object = (options: LagopusObjectOptions): LagopusObjectData => {
   let { attrsList, data } = options;
 
   let buffers = attrsList.map((attr) => {
-    var buffer: Float32Array | Uint32Array;
-    let format = attr.format;
-    if (format === "float32") {
-      buffer = new Float32Array(data.length);
-    } else if (format === "float32x2") {
-      buffer = new Float32Array(data.length * 2);
-    } else if (format === "float32x3") {
-      buffer = new Float32Array(data.length * 3);
-    } else if (format === "float32x4") {
-      buffer = new Float32Array(data.length * 4);
-    } else if (format === "uint32") {
-      buffer = new Uint32Array(data.length);
-    } else {
-      throw new Error(`unsupported format ${format}`);
-    }
+    var buffer = newBufferFormatLength(attr.format, data.length);
 
     var pointer = 0;
     for (let i = 0; i < data.length; i++) {
@@ -37,16 +23,13 @@ export let object = (options: LagopusObjectOptions): LagopusObjectData => {
         pointer += 1;
       }
     }
+
     return buffer;
   });
 
   var indices: Uint32Array;
-
   if (options.indices) {
-    indices = new Uint32Array(options.indices.length);
-    for (let i = 0; i < options.indices.length; i++) {
-      indices[i] = options.indices[i];
-    }
+    indices = u32buffer(options.indices);
   }
 
   return createRenderer(options.shader, options.topology, options.attrsList, data.length, buffers, options.hitRegion, indices);
@@ -73,5 +56,29 @@ export function flattenData<T>(data: NestedData<T>, collect?: (d: T) => void): T
 
     flattenData(data, collector);
     return ret;
+  }
+}
+
+export function u32buffer(data: number[]): Uint32Array {
+  let ret = new Uint32Array(data.length);
+  for (let i = 0; i < data.length; i++) {
+    ret[i] = data[i];
+  }
+  return ret;
+}
+
+export function newBufferFormatLength(format: GPUVertexFormat, size: number): Float32Array | Uint32Array {
+  if (format === "float32") {
+    return new Float32Array(size);
+  } else if (format === "float32x2") {
+    return new Float32Array(size * 2);
+  } else if (format === "float32x3") {
+    return new Float32Array(size * 3);
+  } else if (format === "float32x4") {
+    return new Float32Array(size * 4);
+  } else if (format === "uint32") {
+    return new Uint32Array(size);
+  } else {
+    throw new Error(`unsupported format ${format}`);
   }
 }
