@@ -21,6 +21,7 @@ export interface LagopusObjectOptions {
   attrsList: LagopusAttribute[];
   data: Record<string, number[]>[];
   hitRegion?: LagopusHitRegion;
+  indices?: number[];
 }
 
 export interface LagopusObjectData {
@@ -31,6 +32,7 @@ export interface LagopusObjectData {
   vertexBuffers: GPUBuffer[];
   length: number;
   hitRegion?: LagopusHitRegion;
+  indices?: GPUBuffer;
 }
 
 export interface LagopusGroup {

@@ -40,7 +40,16 @@ export let object = (options: LagopusObjectOptions): LagopusObjectData => {
     return buffer;
   });
 
-  return createRenderer(options.shader, options.topology, options.attrsList, data.length, buffers, options.hitRegion);
+  var indices: Uint32Array;
+
+  if (options.indices) {
+    indices = new Uint32Array(options.indices.length);
+    for (let i = 0; i < options.indices.length; i++) {
+      indices[i] = options.indices[i];
+    }
+  }
+
+  return createRenderer(options.shader, options.topology, options.attrsList, data.length, buffers, options.hitRegion, indices);
 };
 
 export type NestedData<T> = NestedData<T>[] | T;

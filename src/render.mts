@@ -74,12 +74,14 @@ export let createRenderer = (
   }[],
   verticesLength: number,
   vertices: (Float32Array | Uint32Array)[],
-  hitRegion: LagopusHitRegion
+  hitRegion: LagopusHitRegion,
+  indices: Uint32Array
 ): LagopusObjectData => {
   // load shared device
   let device = atomDevice.deref();
 
   let vertexBuffers = vertices.map((v) => createBuffer(v, GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST));
+  let indecesBuffer = indices ? createBuffer(indices, GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST) : null;
 
   const vertexBuffersDescriptors = attrsList.map((info, idx) => {
     let stride = info.size * (info.unitSize || 4);
@@ -114,11 +116,12 @@ export let createRenderer = (
     vertexBuffers,
     length: verticesLength,
     hitRegion: hitRegion,
+    indices: indecesBuffer,
   };
 };
 
 let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
-  let { topology, shaderModule, vertexBuffersDescriptors, vertexBuffers } = info;
+  let { topology, shaderModule, vertexBuffersDescriptors, vertexBuffers, indices } = info;
 
   let device = atomDevice.deref();
   let context = atomContext.deref();
@@ -248,7 +251,14 @@ let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
   vertexBuffers.forEach((vertexBuffer, idx) => {
     passEncoder.setVertexBuffer(idx, vertexBuffer);
   });
-  passEncoder.draw(info.length);
+
+  if (indices) {
+    // just use uint32, skip uint16
+    passEncoder.setIndexBuffer(indices, "uint32");
+    passEncoder.drawIndexed(indices.size / 4);
+  } else {
+    passEncoder.draw(info.length);
+  }
   passEncoder.end();
 
   return commandEncoder.finish();
