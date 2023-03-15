@@ -28,7 +28,7 @@ export interface LagopusObjectData {
   topology: GPUPrimitiveTopology;
   vertexBuffersDescriptors: Iterable<GPUVertexBufferLayout | null>;
   shaderModule: GPUShaderModule;
-  vertexBuffer: GPUBuffer;
+  vertexBuffers: GPUBuffer[];
   length: number;
   hitRegion?: LagopusHitRegion;
 }

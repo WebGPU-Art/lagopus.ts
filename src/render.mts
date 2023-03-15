@@ -73,42 +73,28 @@ export let createRenderer = (
     unitSize?: number;
   }[],
   verticesLength: number,
-  vertices: Float32Array,
+  vertices: (Float32Array | Uint32Array)[],
   hitRegion: LagopusHitRegion
 ): LagopusObjectData => {
   // load shared device
   let device = atomDevice.deref();
 
-  const vertexBuffer = device.createBuffer({
-    size: vertices.byteLength,
-    usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-    mappedAtCreation: true,
-  });
-  new Float32Array(vertexBuffer.getMappedRange()).set(vertices);
-  vertexBuffer.unmap();
+  let vertexBuffers = vertices.map((v) => createBuffer(v, GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST));
 
-  // need to decide `location` based on given information
-  let offsetCollect = 0;
-  // expected attributes descriptor
-  // [
-  //   { shaderLocation: 0, offset: 0, format: "float32x4" as GPUVertexFormat },
-  //   { shaderLocation: 1, offset: 16, format: "float32x4" as GPUVertexFormat },
-  // ];
-
-  const stride = attrsList.reduce((acc, info) => acc + info.size * (info.unitSize || 4), 0);
-
-  const vertexBuffersDescriptors = [
-    {
-      attributes: attrsList.map((info, idx) => {
-        let { format, size } = info;
-        let offset = offsetCollect;
-        offsetCollect += size * (info.unitSize || 4);
-        return { shaderLocation: idx, offset, format };
-      }),
+  const vertexBuffersDescriptors = attrsList.map((info, idx) => {
+    let stride = info.size * (info.unitSize || 4);
+    return {
+      attributes: [
+        {
+          shaderLocation: idx,
+          offset: 0,
+          format: info.format,
+        },
+      ],
       arrayStride: stride,
       stepMode: "vertex" as GPUVertexStepMode,
-    },
-  ];
+    } as GPUVertexBufferLayout;
+  });
 
   // ~~ DEFINE BASIC SHADERS ~~
   const shaderModule = device.createShaderModule({
@@ -125,14 +111,14 @@ export let createRenderer = (
     topology: topology,
     shaderModule: shaderModule,
     vertexBuffersDescriptors: vertexBuffersDescriptors,
-    vertexBuffer: vertexBuffer,
+    vertexBuffers,
     length: verticesLength,
     hitRegion: hitRegion,
   };
 };
 
 let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
-  let { topology, shaderModule, vertexBuffersDescriptors, vertexBuffer } = info;
+  let { topology, shaderModule, vertexBuffersDescriptors, vertexBuffers } = info;
 
   let device = atomDevice.deref();
   let context = atomContext.deref();
@@ -259,7 +245,9 @@ let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
 
   passEncoder.setBindGroup(0, uniformBindGroup);
   passEncoder.setPipeline(pipeline);
-  passEncoder.setVertexBuffer(0, vertexBuffer);
+  vertexBuffers.forEach((vertexBuffer, idx) => {
+    passEncoder.setVertexBuffer(idx, vertexBuffer);
+  });
   passEncoder.draw(info.length);
   passEncoder.end();
 
@@ -276,7 +264,7 @@ export let collectBuffers = (el: LagopusElement, buffers: GPUCommandBuffer[]) =>
 };
 
 // 👋 Helper function for creating GPUBuffer(s) out of Typed Arrays
-const createBuffer = (arr: Float32Array | Uint16Array, usage: number) => {
+const createBuffer = (arr: Float32Array | Uint32Array, usage: number) => {
   // 📏 Align to 4 bytes (thanks @chrimsonite)
   let desc = {
     size: (arr.byteLength + 3) & ~3,
@@ -287,7 +275,7 @@ const createBuffer = (arr: Float32Array | Uint16Array, usage: number) => {
   let device = atomDevice.deref();
   let buffer = device.createBuffer(desc);
 
-  const writeArray = arr instanceof Uint16Array ? new Uint16Array(buffer.getMappedRange()) : new Float32Array(buffer.getMappedRange());
+  const writeArray = arr instanceof Uint32Array ? new Uint32Array(buffer.getMappedRange()) : new Float32Array(buffer.getMappedRange());
   writeArray.set(arr);
   buffer.unmap();
   return buffer;
