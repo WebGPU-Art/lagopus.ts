@@ -208,6 +208,8 @@ let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
     },
     primitive: {
       topology,
+      // pick uint32 for general usages
+      stripIndexFormat: topology === "line-strip" || topology === "triangle-strip" ? "uint32" : undefined,
     },
     depthStencil: {
       depthWriteEnabled: true,
