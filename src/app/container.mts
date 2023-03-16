@@ -41,6 +41,9 @@ export let compContainer = (store: { position: V3 }): LagopusElement => {
           { position: [-100.0, 100.0, 0.4, 1], color: [0, 0, 1, 1] },
         ],
       ]),
+      // indices: [0, 1, 2],
+      // indices: [3, 4, 5],
+      // indices: [0, 1, 2, 3, 4, 5],
     }),
     object({
       shader: triangleWgsl,
