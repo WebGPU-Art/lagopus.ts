@@ -250,6 +250,10 @@ let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
 
   passEncoder.setBindGroup(0, uniformBindGroup);
   passEncoder.setPipeline(pipeline);
+  // let w = window.innerWidth * devicePixelRatio;
+  // let h = window.innerHeight * devicePixelRatio;
+  // this.passEncoder.setViewport(0, 0, w, h, 0, 1);
+  // this.passEncoder.setScissorRect(0, 0, w, h);
   vertexBuffers.forEach((vertexBuffer, idx) => {
     passEncoder.setVertexBuffer(idx, vertexBuffer);
   });
@@ -311,4 +315,9 @@ export function renderLagopusTree(tree: LagopusElement, dispatch: (op: any, data
   atomProxiedDispatch.reset(dispatch);
   atomObjectsTree.reset(tree);
   paintLagopusTree();
+}
+
+export function resetCanvasHeight(canvas: HTMLCanvasElement) {
+  // canvas height not accurate on Android Pad, use innerHeight
+  canvas.style.height = `${window.innerHeight}px`;
 }
