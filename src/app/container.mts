@@ -12,8 +12,8 @@ export let compContainer = (store: { position: V3 }): LagopusElement => {
       topology: "triangle-list",
       // topology: "line-strip",
       attrsList: [
-        { field: "position", format: "float32x4", size: 4 },
-        { field: "color", format: "float32x4", size: 4 },
+        { field: "position", format: "float32x4" },
+        { field: "color", format: "float32x4" },
       ],
       data: [
         { position: [-100.0, -100.0, 0.3, 1], color: [1, 0, 0, 1] },
@@ -26,8 +26,8 @@ export let compContainer = (store: { position: V3 }): LagopusElement => {
       shader: triangleWgsl,
       topology: "triangle-list",
       attrsList: [
-        { field: "position", format: "float32x4", size: 4 },
-        { field: "color", format: "float32x4", size: 4 },
+        { field: "position", format: "float32x4" },
+        { field: "color", format: "float32x4" },
       ],
       data: flattenData([
         [
@@ -49,8 +49,8 @@ export let compContainer = (store: { position: V3 }): LagopusElement => {
       shader: triangleWgsl,
       topology: "triangle-list",
       attrsList: [
-        { field: "position", format: "float32x4", size: 4 },
-        { field: "color", format: "float32x4", size: 4 },
+        { field: "position", format: "float32x4" },
+        { field: "color", format: "float32x4" },
       ],
       data: [
         { position: [120.0, 120.0, 30, 1], color: [1, 0, 0, 1] },

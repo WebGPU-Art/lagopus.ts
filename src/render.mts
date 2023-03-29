@@ -1,4 +1,4 @@
-import { LagopusElement, LagopusHitRegion, LagopusObjectData } from "./primes.mjs";
+import { LagopusAttribute, LagopusElement, LagopusHitRegion, LagopusObjectData } from "./primes.mjs";
 import { atomDepthTexture, atomContext, atomDevice, atomBufferNeedClear, atomLagopusTree, atomProxiedDispatch, atomObjectsTree } from "./global.mjs";
 import { coneBackScale } from "./config.mjs";
 import { atomViewerPosition, atomViewerUpward, newLookatPoint } from "./perspective.mjs";
@@ -65,13 +65,7 @@ export const initializeContext = async (): Promise<any> => {
 export let createRenderer = (
   shaderCode: string,
   topology: GPUPrimitiveTopology,
-  attrsList: {
-    field: string;
-    format: GPUVertexFormat;
-    size: number;
-    /** defaults to 4 for `float32` since 32=8*4, would change for other types */
-    unitSize?: number;
-  }[],
+  attrsList: LagopusAttribute[],
   verticesLength: number,
   vertices: (Float32Array | Uint32Array)[],
   hitRegion: LagopusHitRegion,
@@ -84,7 +78,7 @@ export let createRenderer = (
   let indecesBuffer = indices ? createBuffer(indices, GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST) : null;
 
   const vertexBuffersDescriptors = attrsList.map((info, idx) => {
-    let stride = info.size * (info.unitSize || 4);
+    let stride = readFormatSize(info.format);
     return {
       attributes: [
         {
@@ -320,4 +314,28 @@ export function renderLagopusTree(tree: LagopusElement, dispatch: (op: any, data
 export function resetCanvasHeight(canvas: HTMLCanvasElement) {
   // canvas height not accurate on Android Pad, use innerHeight
   canvas.style.height = `${window.innerHeight}px`;
+}
+
+/** some size from https://www.w3.org/TR/webgpu/#vertex-formats */
+export function readFormatSize(format: GPUVertexFormat): number {
+  switch (format) {
+    case "float32":
+      return 4;
+    case "float32x2":
+      return 8;
+    case "float32x3":
+      return 12;
+    case "float32x4":
+      return 16;
+    case "uint32":
+      return 4;
+    case "uint32x2":
+      return 8;
+    case "uint32x3":
+      return 12;
+    case "uint32x4":
+      return 16;
+    default:
+      throw new Error(`Unimplemented format size for: ${format}`);
+  }
 }
