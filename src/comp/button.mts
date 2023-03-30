@@ -65,8 +65,8 @@ export let compSlider = (
       },
     },
     attrsList: [
-      { field: "position", format: "float32x4", size: 4 },
-      { field: "color", format: "float32x4", size: 4 },
+      { field: "position", format: "float32x4" },
+      { field: "color", format: "float32x4" },
     ],
     data: indices.map((i) => ({
       position: [...vAdd(geo[i].map((x) => x * size) as V3, position), 1.0],
@@ -138,8 +138,8 @@ export let compDragPoint = (
       },
     },
     attrsList: [
-      { field: "position", format: "float32x4", size: 4 },
-      { field: "color", format: "float32x4", size: 4 },
+      { field: "position", format: "float32x4" },
+      { field: "color", format: "float32x4" },
     ],
     data: indices.map((i) => ({
       position: [...vAdd(geo[i].map((x) => x * size) as V3, position), 1.0],
@@ -179,8 +179,8 @@ export let compButton = (
       },
     },
     attrsList: [
-      { field: "position", format: "float32x4", size: 4 },
-      { field: "color", format: "float32x4", size: 4 },
+      { field: "position", format: "float32x4" },
+      { field: "color", format: "float32x4" },
     ],
     data: indices.map((i) => ({
       position: [...vAdd(geo[i].map((x) => x * size) as V3, position), 1.0],

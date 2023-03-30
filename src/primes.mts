@@ -9,10 +9,8 @@ export type V2 = [number, number];
 
 export interface LagopusAttribute {
   field: string;
+  /** Lagopus has only very limited support for f32 and u32 */
   format: GPUVertexFormat;
-  size: number;
-  /** defaults to 4 for `float32` since 32=8*4, would change for other types */
-  unitSize?: number;
 }
 
 export interface LagopusObjectOptions {
