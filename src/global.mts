@@ -8,6 +8,8 @@ export var atomDepthTexture: Atom<GPUTexture> = new Atom(null);
 
 export var atomBufferNeedClear: Atom<boolean> = new Atom(true);
 
+export var atomClearColor: Atom<{ r: number; g: number; b: number; a: number }> = new Atom(undefined);
+
 export var atomLagopusTree: Atom<LagopusElement> = new Atom(null);
 
 // proxy it for hot reloading
