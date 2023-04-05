@@ -29,7 +29,7 @@ function renderApp() {
 
 window.onload = async () => {
   await initializeContext();
-  atomClearColor.reset({ r: 1, g: 1, b: 1, a: 1.0 });
+  atomClearColor.reset({ r: 0.92, g: 0.92, b: 0.92, a: 1.0 });
   let canvas = document.querySelector("canvas");
   renderApp();
   console.log("loaded");

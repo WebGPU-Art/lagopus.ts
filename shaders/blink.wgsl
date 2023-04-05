@@ -1,43 +1,3 @@
-## WebGPU tiny example
-
-Based on:
-
-- https://medium.com/@carmencincotti/drawing-a-triangle-with-webgpu-53d48fb1ba8
-- https://codepen.io/alaingalvan/pen/GRgvLGw
-
-> WebGPU support has landed on Chrome Canary for Andriod 112 behind experimental flag. Turn on "unsafe WebGPU" and add debug domains to "insecure origins treated as secure".
-
-### Demo
-
-Defining object:
-
-```js
-object({
-  shader: triangleWgsl,
-  topology: "triangle-list",
-  attrsList: [
-    { field: "position", format: "float32x4" },
-    { field: "color", format: "float32x4" },
-  ],
-  data: [
-    { position: [120.0, 120.0, 30, 1], color: [1, 0, 0, 1] },
-    { position: [128.0, 120.0, 30, 1], color: [1, 0, 0, 1] },
-    { position: [120.0, 126.0, 38, 1], color: [1, 0, 0, 1] },
-  ],
-  hitRegion: {
-    radius: 4,
-    position: [124, 123, 34],
-    onHit: (e, d) => {
-      console.log("hit", e);
-      d("hit", { x: e.clientX, y: e.clientY });
-    },
-  },
-});
-```
-
-Shader:
-
-```wgsl
 struct UBO {
   cone_back_scale: f32,
   viewport_ratio: f32,
@@ -46,7 +6,12 @@ struct UBO {
   // direction up overhead, better unit vector
   upward: vec3<f32>,
   rightward: vec3<f32>,
+
   camera_position: vec3<f32>,
+  _pad: u32, // https://www.w3.org/TR/WGSL/#structure-member-layout
+
+  // custom data
+  time: f32,
 };
 
 @group(0) @binding(0)
@@ -55,7 +20,7 @@ var<uniform> uniforms: UBO;
 // perspective
 
 struct PointResult {
-  pointPosition: vec3<f32>,
+  point_position: vec3<f32>,
   r: f32,
   s: f32,
 };
@@ -92,33 +57,27 @@ fn transform_perspective(p: vec3<f32>) -> PointResult {
 // main
 
 struct VertexOut {
-  @builtin(position) position : vec4<f32>,
-  @location(0) color : vec4<f32>,
+  @builtin(position) position: vec4<f32>,
+  @location(1) time: f32,
 };
 
 @vertex
 fn vertex_main(
   @location(0) position: vec4<f32>,
-  @location(1) color: vec4<f32>
 ) -> VertexOut {
+  let p = transform_perspective(position.xyz).point_position;
+
   var output: VertexOut;
-  let p = transform_perspective(position.xyz).pointPosition;
-  let scale: f32 = 0.002;
-  output.position = vec4(p[0]*scale, p[1]*scale, p[2]*scale, 1.0);
+  output.position = vec4((p * 0.002).xyz, 1.0);
   // output.position = position;
-  output.color = color;
+  output.time = fract(uniforms.time);
+  // output.time = 0.5;
   return output;
 }
 
 @fragment
 fn fragment_main(vtx_out: VertexOut) -> @location(0) vec4<f32> {
-  return vtx_out.color;
-  // return vec4<f32>(0.0, 0.0, 1.0, 1.0);
+  // return vtx_out.color;
+  let unit = vec3<f32>(1.0, 1.0, 1.0);
+  return vec4<f32>(unit * vtx_out.time, 1.0);
 }
-```
-
-there's also support for `addUniform`, [whose layout is quite tricky](https://www.w3.org/TR/WGSL/#structure-member-layout).
-
-### License
-
-MIT

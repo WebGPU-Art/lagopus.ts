@@ -20,6 +20,8 @@ export interface LagopusObjectOptions {
   data: Record<string, number[]>[];
   hitRegion?: LagopusHitRegion;
   indices?: number[];
+  /** need to handle alignment manually */
+  addUniform?: () => number[];
 }
 
 export interface LagopusObjectData {
@@ -31,6 +33,8 @@ export interface LagopusObjectData {
   length: number;
   hitRegion?: LagopusHitRegion;
   indices?: GPUBuffer;
+  /** need to handle alignment manually */
+  addUniform?: () => number[];
 }
 
 export interface LagopusGroup {

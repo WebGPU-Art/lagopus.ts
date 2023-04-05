@@ -8,6 +8,7 @@ import {
   atomProxiedDispatch,
   atomObjectsTree,
   atomClearColor,
+  wLog,
 } from "./global.mjs";
 import { coneBackScale } from "./config.mjs";
 import { atomViewerPosition, atomViewerUpward, newLookatPoint } from "./perspective.mjs";
@@ -78,7 +79,8 @@ export let createRenderer = (
   verticesLength: number,
   vertices: (Float32Array | Uint32Array)[],
   hitRegion: LagopusHitRegion,
-  indices: Uint32Array
+  indices: Uint32Array,
+  addUniform: () => number[]
 ): LagopusObjectData => {
   // load shared device
   let device = atomDevice.deref();
@@ -120,6 +122,7 @@ export let createRenderer = (
     length: verticesLength,
     hitRegion: hitRegion,
     indices: indecesBuffer,
+    addUniform: addUniform,
   };
 };
 
@@ -158,13 +161,15 @@ let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
     0,
     // cameraPosition
     ...atomViewerPosition.deref(),
-    // alignment
     0,
+    // alignment
+    ...(info.addUniform?.() || []),
   ]);
 
   let uniformBuffer: GPUBuffer = null;
 
   uniformBuffer = createBuffer(uniformData, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST);
+  // console.log(info.addUniform?.(), uniformData.length, uniformBuffer);
 
   let uniformBindGroupLayout = device.createBindGroupLayout({
     entries: [
