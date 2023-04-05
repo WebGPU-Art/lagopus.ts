@@ -6,6 +6,7 @@ import { onControlEvent } from "./control.mjs";
 import { setupMouseEvents } from "./events.mjs";
 import { Atom } from "./atom.mjs";
 import { V3 } from "./primes.mjs";
+import { atomClearColor } from "./global.mjs";
 
 let store = new Atom({
   position: [180, 80, 80] as V3,
@@ -28,6 +29,7 @@ function renderApp() {
 
 window.onload = async () => {
   await initializeContext();
+  atomClearColor.reset({ r: 1, g: 1, b: 1, a: 1.0 });
   let canvas = document.querySelector("canvas");
   renderApp();
   console.log("loaded");

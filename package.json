@@ -1,6 +1,6 @@
 {
   "name": "@triadica/lagopus",
-  "version": "0.0.1-a11",
+  "version": "0.0.1",
   "type": "module",
   "main": "./lib/index.mjs",
   "scripts": {

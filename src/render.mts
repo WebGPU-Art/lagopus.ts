@@ -1,5 +1,14 @@
 import { LagopusAttribute, LagopusElement, LagopusHitRegion, LagopusObjectData } from "./primes.mjs";
-import { atomDepthTexture, atomContext, atomDevice, atomBufferNeedClear, atomLagopusTree, atomProxiedDispatch, atomObjectsTree } from "./global.mjs";
+import {
+  atomDepthTexture,
+  atomContext,
+  atomDevice,
+  atomBufferNeedClear,
+  atomLagopusTree,
+  atomProxiedDispatch,
+  atomObjectsTree,
+  atomClearColor,
+} from "./global.mjs";
 import { coneBackScale } from "./config.mjs";
 import { atomViewerPosition, atomViewerUpward, newLookatPoint } from "./perspective.mjs";
 import { vNormalize, vCross, vLength } from "./quaternion.mjs";
@@ -131,7 +140,7 @@ let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
   const uniformData = new Float32Array([
     // coneBackScale
     coneBackScale,
-    // viewportRatio
+    // viewport_ratio
     window.innerHeight / window.innerWidth,
     vLength(lookAt),
     // alignment
@@ -218,7 +227,7 @@ let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
   const renderPassDescriptor = {
     colorAttachments: [
       {
-        clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
+        clearValue: atomClearColor.value ?? { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
         loadOp: (needClear ? "clear" : "load") as GPULoadOp,
         storeOp: "store" as GPUStoreOp,
         view: null as GPUTextureView,
