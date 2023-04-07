@@ -1,4 +1,5 @@
 import triangleWgsl from "../../shaders/triangle.wgsl";
+import blinkWgsl from "../../shaders/blink.wgsl";
 
 import { flattenData, group, object } from "../alias.mjs";
 import { LagopusElement, V3 } from "../primes.mjs";
@@ -64,6 +65,16 @@ export let compContainer = (store: { position: V3 }): LagopusElement => {
           console.log("hit", e);
           d("hit", { x: e.clientX, y: e.clientY });
         },
+      },
+    }),
+
+    object({
+      shader: blinkWgsl,
+      topology: "triangle-list",
+      attrsList: [{ field: "position", format: "float32x4" }],
+      data: [{ position: [140.0, 0.0, 30, 1] }, { position: [120.0, 20.0, 30, 1] }, { position: [140.0, 40.0, 30, 1] }],
+      addUniform: () => {
+        return [(Date.now() / 400) % 1, 0, 0, 0];
       },
     }),
     compButton(

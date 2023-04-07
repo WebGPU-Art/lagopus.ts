@@ -32,7 +32,7 @@ export let object = (options: LagopusObjectOptions): LagopusObjectData => {
     indices = u32buffer(options.indices);
   }
 
-  return createRenderer(options.shader, options.topology, options.attrsList, data.length, buffers, options.hitRegion, indices);
+  return createRenderer(options.shader, options.topology, options.attrsList, data.length, buffers, options.hitRegion, indices, options.addUniform);
 };
 
 export type NestedData<T> = NestedData<T>[] | T;
