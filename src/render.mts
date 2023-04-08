@@ -11,11 +11,14 @@ import {
   wLog,
   atomCanvasTexture,
   atomCommandEncoder,
+  atomPingBuffer,
+  atomPongBuffer,
 } from "./global.mjs";
 import { coneBackScale } from "./config.mjs";
 import { atomViewerPosition, atomViewerUpward, newLookatPoint } from "./perspective.mjs";
 import { vNormalize, vCross, vLength } from "./quaternion.mjs";
 import fullscreenWgsl from "../shaders/fullscreen.wgsl";
+import blurWGSL from "../shaders/blur.wgsl";
 
 /** init canvas context */
 export const initializeContext = async (): Promise<any> => {
@@ -316,8 +319,151 @@ export function postRendering() {
   let canvasTexture = atomCanvasTexture.deref();
   let device = atomDevice.deref();
   let context = atomContext.deref();
+  let width = window.innerWidth * devicePixelRatio;
+  let height = window.innerHeight * devicePixelRatio;
 
-  // previously renderede to canvasTexture, now we need to render it to real canvas
+  // previously rendered to canvasTexture, not post-process
+
+  const commandEncoder = atomCommandEncoder.deref();
+
+  const blurPipeline = device.createComputePipeline({
+    layout: "auto",
+    compute: {
+      module: device.createShaderModule({
+        code: blurWGSL,
+      }),
+      entryPoint: "main",
+    },
+  });
+
+  let iterations = 1;
+
+  let buffer0 = atomPingBuffer.deref();
+  let buffer1 = atomPongBuffer.deref();
+  const blurParamsBuffer = device.createBuffer({
+    size: 8,
+    usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
+  });
+
+  device.queue.writeBuffer(blurParamsBuffer, 0, new Uint32Array([20, 90]));
+
+  const textures = [0, 1].map(() => {
+    return device.createTexture({
+      size: {
+        width: width,
+        height: height,
+      },
+      format: "rgba8unorm",
+      usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
+    });
+  });
+
+  let sampler = device.createSampler({
+    magFilter: "linear",
+    minFilter: "linear",
+  });
+
+  const computeConstants = device.createBindGroup({
+    layout: blurPipeline.getBindGroupLayout(0),
+    entries: [
+      {
+        binding: 0,
+        resource: sampler,
+      },
+      {
+        binding: 1,
+        resource: {
+          buffer: blurParamsBuffer,
+        },
+      },
+    ],
+  });
+
+  const computeBindGroup0 = device.createBindGroup({
+    layout: blurPipeline.getBindGroupLayout(1),
+    entries: [
+      {
+        binding: 1,
+        resource: canvasTexture.createView(),
+      },
+      {
+        binding: 2,
+        resource: textures[0].createView(),
+      },
+      {
+        binding: 3,
+        resource: {
+          buffer: buffer0,
+        },
+      },
+    ],
+  });
+
+  const computeBindGroup1 = device.createBindGroup({
+    layout: blurPipeline.getBindGroupLayout(1),
+    entries: [
+      {
+        binding: 1,
+        resource: textures[0].createView(),
+      },
+      {
+        binding: 2,
+        resource: textures[1].createView(),
+      },
+      {
+        binding: 3,
+        resource: {
+          buffer: buffer1,
+        },
+      },
+    ],
+  });
+
+  const computeBindGroup2 = device.createBindGroup({
+    layout: blurPipeline.getBindGroupLayout(1),
+    entries: [
+      {
+        binding: 1,
+        resource: textures[1].createView(),
+      },
+      {
+        binding: 2,
+        resource: textures[0].createView(),
+      },
+      {
+        binding: 3,
+        resource: {
+          buffer: buffer0,
+        },
+      },
+    ],
+  });
+
+  const computePass = commandEncoder.beginComputePass();
+  computePass.setPipeline(blurPipeline);
+  computePass.setBindGroup(0, computeConstants);
+
+  computePass.setBindGroup(1, computeBindGroup0);
+  // computePass.dispatchWorkgroups(Math.ceil(height / 2), Math.ceil(width / 2), 4);
+  computePass.dispatchWorkgroups(width / 2, height / 4);
+
+  computePass.setBindGroup(1, computeBindGroup1);
+  // computePass.dispatchWorkgroups(Math.ceil(height), Math.ceil(width / batched));
+  computePass.dispatchWorkgroups(width / 2, height / 4);
+
+  for (let i = 0; i < iterations - 1; ++i) {
+    computePass.setBindGroup(1, computeBindGroup2);
+    // computePass.dispatchWorkgroups(Math.ceil(width), Math.ceil(height / batched));
+    computePass.dispatchWorkgroups(width / 2, height / 4);
+
+    computePass.setBindGroup(1, computeBindGroup1);
+    // computePass.dispatchWorkgroups(Math.ceil(height), Math.ceil(width / batched));
+    computePass.dispatchWorkgroups(width / 2, height / 4);
+  }
+
+  computePass.end();
+
+  // now we need to render it to real canvas
 
   const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
 
@@ -345,11 +491,6 @@ export function postRendering() {
     },
   });
 
-  const sampler = device.createSampler({
-    magFilter: "linear",
-    minFilter: "linear",
-  });
-
   const showResultBindGroup = device.createBindGroup({
     layout: fullscreenQuadPipeline.getBindGroupLayout(0),
     entries: [
@@ -359,11 +500,10 @@ export function postRendering() {
       },
       {
         binding: 1,
-        resource: canvasTexture.createView(),
+        resource: textures[0].createView(),
       },
     ],
   });
-  const commandEncoder = atomCommandEncoder.deref();
 
   const passEncoder = commandEncoder.beginRenderPass({
     colorAttachments: [
@@ -419,6 +559,31 @@ export function initializeCanvasTextures() {
   });
 
   atomDepthTexture.reset(depthTexture);
+
+  const buffer0 = (() => {
+    const buffer = device.createBuffer({
+      size: 4,
+      mappedAtCreation: true,
+      usage: GPUBufferUsage.UNIFORM,
+    });
+    new Uint32Array(buffer.getMappedRange())[0] = 0;
+    buffer.unmap();
+    return buffer;
+  })();
+
+  const buffer1 = (() => {
+    const buffer = device.createBuffer({
+      size: 4,
+      mappedAtCreation: true,
+      usage: GPUBufferUsage.UNIFORM,
+    });
+    new Uint32Array(buffer.getMappedRange())[0] = 1;
+    buffer.unmap();
+    return buffer;
+  })();
+
+  atomPingBuffer.value = buffer0;
+  atomPongBuffer.value = buffer1;
 }
 
 /** some size from https://www.w3.org/TR/webgpu/#vertex-formats */

@@ -10,8 +10,8 @@ export var atomDepthTexture: Atom<GPUTexture> = new Atom(null);
 export let atomCanvasTexture = new Atom(undefined as GPUTexture);
 
 /** ping/pong buffer for bloom effect */
-export let pingBuffer = new Atom(undefined as GPUBuffer);
-export let pongBuffer = new Atom(undefined as GPUBuffer);
+export let atomPingBuffer = new Atom(undefined as GPUBuffer);
+export let atomPongBuffer = new Atom(undefined as GPUBuffer);
 
 export var atomBufferNeedClear: Atom<boolean> = new Atom(true);
 
