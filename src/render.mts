@@ -9,10 +9,13 @@ import {
   atomObjectsTree,
   atomClearColor,
   wLog,
+  atomCanvasTexture,
+  atomCommandEncoder,
 } from "./global.mjs";
 import { coneBackScale } from "./config.mjs";
 import { atomViewerPosition, atomViewerUpward, newLookatPoint } from "./perspective.mjs";
 import { vNormalize, vCross, vLength } from "./quaternion.mjs";
+import fullscreenWgsl from "../shaders/fullscreen.wgsl";
 
 /** init canvas context */
 export const initializeContext = async (): Promise<any> => {
@@ -58,17 +61,6 @@ export const initializeContext = async (): Promise<any> => {
 
   // set as a shared context
   atomContext.reset(context);
-
-  const depthTexture = device.createTexture({
-    size: [window.innerWidth * devicePixelRatio, window.innerHeight * devicePixelRatio],
-    // format: "depth24plus",
-    // usage: GPUTextureUsage.RENDER_ATTACHMENT,
-    dimension: "2d",
-    format: "depth24plus-stencil8",
-    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
-  });
-
-  atomDepthTexture.reset(depthTexture);
 };
 
 /** prepare vertex buffer from object */
@@ -126,7 +118,7 @@ export let createRenderer = (
   };
 };
 
-let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
+let buildCommandBuffer = (info: LagopusObjectData): void => {
   let { topology, shaderModule, vertexBuffersDescriptors, vertexBuffers, indices } = info;
 
   let device = atomDevice.deref();
@@ -251,9 +243,10 @@ let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
 
   atomBufferNeedClear.reset(false);
 
-  renderPassDescriptor.colorAttachments[0].view = context.getCurrentTexture().createView();
+  // renderPassDescriptor.colorAttachments[0].view = context.getCurrentTexture().createView();
+  renderPassDescriptor.colorAttachments[0].view = atomCanvasTexture.deref().createView();
   renderPassDescriptor.depthStencilAttachment.view = depthTexture.createView();
-  const commandEncoder = device.createCommandEncoder();
+  const commandEncoder = atomCommandEncoder.deref();
   const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
 
   passEncoder.setBindGroup(0, uniformBindGroup);
@@ -274,16 +267,14 @@ let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
     passEncoder.draw(info.length);
   }
   passEncoder.end();
-
-  return commandEncoder.finish();
 };
 
-export let collectBuffers = (el: LagopusElement, buffers: GPUCommandBuffer[]) => {
+export let collectBuffers = (el: LagopusElement) => {
   if (el == null) return;
   if (el.type === "object") {
-    buffers.push(buildCommandBuffer(el));
+    buildCommandBuffer(el);
   } else {
-    el.children.forEach((child) => collectBuffers(child, buffers));
+    el.children.forEach((child) => collectBuffers(child));
   }
 };
 
@@ -307,14 +298,88 @@ const createBuffer = (arr: Float32Array | Uint32Array, usage: number) => {
 
 /** send command buffer to device and render */
 export function paintLagopusTree() {
+  let device = atomDevice.deref();
+  atomCommandEncoder.value = device.createCommandEncoder();
+
   atomBufferNeedClear.reset(true);
   let tree = atomLagopusTree.deref();
-  let bufferList: GPUCommandBuffer[] = [];
-  collectBuffers(tree, bufferList);
+  collectBuffers(tree);
+
+  postRendering();
 
   // load shared device
+  let commandEncoder = atomCommandEncoder.deref();
+  device.queue.submit([commandEncoder.finish()]);
+}
+
+export function postRendering() {
+  let canvasTexture = atomCanvasTexture.deref();
   let device = atomDevice.deref();
-  device.queue.submit(bufferList);
+  let context = atomContext.deref();
+
+  // previously renderede to canvasTexture, now we need to render it to real canvas
+
+  const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
+
+  const fullscreenQuadPipeline = device.createRenderPipeline({
+    layout: "auto",
+    vertex: {
+      module: device.createShaderModule({
+        code: fullscreenWgsl,
+      }),
+      entryPoint: "vert_main",
+    },
+    fragment: {
+      module: device.createShaderModule({
+        code: fullscreenWgsl,
+      }),
+      entryPoint: "frag_main",
+      targets: [
+        {
+          format: presentationFormat,
+        },
+      ],
+    },
+    primitive: {
+      topology: "triangle-list",
+    },
+  });
+
+  const sampler = device.createSampler({
+    magFilter: "linear",
+    minFilter: "linear",
+  });
+
+  const showResultBindGroup = device.createBindGroup({
+    layout: fullscreenQuadPipeline.getBindGroupLayout(0),
+    entries: [
+      {
+        binding: 0,
+        resource: sampler,
+      },
+      {
+        binding: 1,
+        resource: canvasTexture.createView(),
+      },
+    ],
+  });
+  const commandEncoder = atomCommandEncoder.deref();
+
+  const passEncoder = commandEncoder.beginRenderPass({
+    colorAttachments: [
+      {
+        view: context.getCurrentTexture().createView(),
+        clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
+        loadOp: "clear",
+        storeOp: "store",
+      },
+    ],
+  });
+
+  passEncoder.setPipeline(fullscreenQuadPipeline);
+  passEncoder.setBindGroup(0, showResultBindGroup);
+  passEncoder.draw(6, 1, 0, 0);
+  passEncoder.end();
 }
 
 /** track tree, internally it calls `paintLagopusTree` to render */
@@ -328,6 +393,32 @@ export function renderLagopusTree(tree: LagopusElement, dispatch: (op: any, data
 export function resetCanvasHeight(canvas: HTMLCanvasElement) {
   // canvas height not accurate on Android Pad, use innerHeight
   canvas.style.height = `${window.innerHeight}px`;
+}
+
+/** create a texture for canvas */
+export function initializeCanvasTextures() {
+  let device = atomDevice.deref();
+  let texture = device.createTexture({
+    size: {
+      width: window.innerWidth * devicePixelRatio,
+      height: window.innerHeight * devicePixelRatio,
+    },
+    format: "bgra8unorm",
+    usage: GPUTextureUsage.COPY_SRC | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+    // usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
+  });
+  atomCanvasTexture.reset(texture);
+
+  const depthTexture = device.createTexture({
+    size: [window.innerWidth * devicePixelRatio, window.innerHeight * devicePixelRatio],
+    // format: "depth24plus",
+    // usage: GPUTextureUsage.RENDER_ATTACHMENT,
+    dimension: "2d",
+    format: "depth24plus-stencil8",
+    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+  });
+
+  atomDepthTexture.reset(depthTexture);
 }
 
 /** some size from https://www.w3.org/TR/webgpu/#vertex-formats */

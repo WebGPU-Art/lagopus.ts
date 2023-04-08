@@ -1,4 +1,4 @@
-import { initializeContext, paintLagopusTree, renderLagopusTree, resetCanvasHeight } from "./render.mjs";
+import { initializeCanvasTextures, initializeContext, paintLagopusTree, renderLagopusTree, resetCanvasHeight } from "./render.mjs";
 
 import { compContainer } from "./app/container.mjs";
 import { renderControl, startControlLoop } from "@triadica/touch-control";
@@ -29,6 +29,7 @@ function renderApp() {
 
 window.onload = async () => {
   await initializeContext();
+  initializeCanvasTextures();
   atomClearColor.reset({ r: 0.92, g: 0.92, b: 0.92, a: 1.0 });
   let canvas = document.querySelector("canvas");
   renderApp();
@@ -39,6 +40,7 @@ window.onload = async () => {
 
   window.onresize = () => {
     resetCanvasHeight(canvas);
+    initializeCanvasTextures();
     paintLagopusTree();
   };
   resetCanvasHeight(canvas);
