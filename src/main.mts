@@ -8,7 +8,7 @@ import { setupMouseEvents } from "./events.mjs";
 import { Atom } from "./atom.mjs";
 import { V3 } from "./primes.mjs";
 import { atomClearColor } from "./global.mjs";
-import { ua } from "./config.mjs";
+import { isMobile } from "./config.mjs";
 
 let store = new Atom({
   position: [180, 80, 80] as V3,
@@ -30,7 +30,7 @@ function renderApp() {
 }
 
 window.onload = async () => {
-  if (ua.os.name.includes("Mac OS")) {
+  if (!isMobile) {
     enableBloom();
   }
 

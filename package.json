@@ -1,8 +1,8 @@
 {
   "name": "@triadica/lagopus",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "type": "module",
-  "main": "./lib/index.mjs",
+  "module": "./lib/index.mjs",
   "scripts": {
     "compile": "rm -rfv lib/* && tsc -d --project tsconfig.json --outDir lib/",
     "prepare": "yarn compile"
@@ -16,8 +16,6 @@
   },
   "dependencies": {
     "@triadica/touch-control": "^0.0.2",
-    "@types/ua-parser-js": "^0.7.36",
-    "ismobilejs": "^1.1.1",
-    "ua-parser-js": "^1.0.35"
+    "ismobilejs": "^1.1.1"
   }
 }
