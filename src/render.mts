@@ -161,9 +161,7 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
     ...(info.addUniform?.() || []),
   ]);
 
-  let uniformBuffer: GPUBuffer = null;
-
-  uniformBuffer = createBuffer(uniformData, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST);
+  let uniformBuffer = createBuffer(uniformData, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST);
   // console.log(info.addUniform?.(), uniformData.length, uniformBuffer);
 
   let uniformBindGroupLayout = device.createBindGroupLayout({
@@ -502,6 +500,10 @@ export function postRendering() {
         binding: 1,
         resource: textures[0].createView(),
       },
+      {
+        binding: 2,
+        resource: canvasTexture.createView(),
+      },
     ],
   });
 
@@ -539,10 +541,7 @@ export function resetCanvasHeight(canvas: HTMLCanvasElement) {
 export function initializeCanvasTextures() {
   let device = atomDevice.deref();
   let texture = device.createTexture({
-    size: {
-      width: window.innerWidth * devicePixelRatio,
-      height: window.innerHeight * devicePixelRatio,
-    },
+    size: [window.innerWidth * devicePixelRatio, window.innerHeight * devicePixelRatio],
     format: "bgra8unorm",
     usage: GPUTextureUsage.COPY_SRC | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
     // usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
