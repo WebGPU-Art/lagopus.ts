@@ -15,6 +15,9 @@ export let atomPingBuffer = new Atom(undefined as GPUBuffer);
 export let atomPongBuffer = new Atom(undefined as GPUBuffer);
 export let atomScreenFilterBuffer = new Atom(undefined as GPUBuffer);
 
+export let atomPingTexture = new Atom(undefined as GPUTexture);
+export let atomPongTexture = new Atom(undefined as GPUTexture);
+
 export var atomBufferNeedClear: Atom<boolean> = new Atom(true);
 
 export var atomClearColor: Atom<{ r: number; g: number; b: number; a: number }> = new Atom(undefined);

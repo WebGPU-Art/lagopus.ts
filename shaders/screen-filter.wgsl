@@ -38,7 +38,7 @@ fn vert_main(@builtin(vertex_index) VertexIndex : u32) -> VertexOutput {
 @fragment
 fn frag_main(@location(0) fragUV : vec2<f32>) -> @location(0) vec4<f32> {
   let a = textureSample(myTexture, mySampler, fragUV);
-  if (color_strength(a) > 0.5) {
+  if (color_strength(a) > 0.7) {
     return a;
   } else {
     // return vec4(0.6, 0.6, 1.0, 1.0);

@@ -1,4 +1,5 @@
-import { initializeCanvasTextures, initializeContext, paintLagopusTree, renderLagopusTree, resetCanvasHeight } from "./render.mjs";
+import { paintLagopusTree, renderLagopusTree, resetCanvasHeight } from "./render.mjs";
+import { initializeCanvasTextures, initializeContext } from "./initialize.js";
 
 import { compContainer } from "./app/container.mjs";
 import { renderControl, startControlLoop } from "@triadica/touch-control";

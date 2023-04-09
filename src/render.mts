@@ -13,8 +13,9 @@ import {
   atomCommandEncoder,
   atomPingBuffer,
   atomPongBuffer,
-  atomScreenFilterBuffer,
   atomFilterTexture,
+  atomPingTexture,
+  atomPongTexture,
 } from "./global.mjs";
 import { coneBackScale } from "./config.mjs";
 import { atomViewerPosition, atomViewerUpward, newLookatPoint } from "./perspective.mjs";
@@ -22,52 +23,6 @@ import { vNormalize, vCross, vLength } from "./quaternion.mjs";
 import fullscreenWgsl from "../shaders/fullscreen.wgsl";
 import blurWGSL from "../shaders/blur.wgsl";
 import screenFilterWgsl from "../shaders/screen-filter.wgsl";
-
-/** init canvas context */
-export const initializeContext = async (): Promise<any> => {
-  // ~~ INITIALIZE ~~ Make sure we can initialize WebGPU
-  if (!navigator.gpu) {
-    console.error("WebGPU cannot be initialized - navigator.gpu not found");
-    return null;
-  }
-  const adapter = await navigator.gpu.requestAdapter();
-  if (!adapter) {
-    console.error("WebGPU cannot be initialized - Adapter not found");
-    return null;
-  }
-  const device = await adapter.requestDevice();
-  device.lost.then(() => {
-    console.error("WebGPU cannot be initialized - Device has been lost");
-    return null;
-  });
-
-  // set as a shared device
-  atomDevice.reset(device);
-
-  const canvas = document.getElementById("canvas-container") as HTMLCanvasElement;
-  const context = canvas.getContext("webgpu");
-  if (!context) {
-    console.error("WebGPU cannot be initialized - Canvas does not support WebGPU");
-    return null;
-  }
-
-  // ~~ CONFIGURE THE SWAP CHAIN ~~
-  const devicePixelRatio = window.devicePixelRatio || 1;
-  const presentationFormat = window.navigator.gpu.getPreferredCanvasFormat();
-
-  canvas.width = window.innerWidth * devicePixelRatio;
-  canvas.height = window.innerHeight * devicePixelRatio;
-
-  context.configure({
-    device,
-    format: presentationFormat,
-    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
-    alphaMode: "premultiplied",
-  });
-
-  // set as a shared context
-  atomContext.reset(context);
-};
 
 /** prepare vertex buffer from object */
 export let createRenderer = (
@@ -330,17 +285,8 @@ export function postRendering() {
   const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
   const commandEncoder = atomCommandEncoder.deref();
 
-  // TODO
-  const textures = [0, 1].map(() => {
-    return device.createTexture({
-      size: {
-        width: width,
-        height: height,
-      },
-      format: "rgba8unorm",
-      usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
-    });
-  });
+  let pingTexture = atomPingTexture.deref();
+  let pongTexture = atomPongTexture.deref();
 
   const filterTexture = atomFilterTexture.deref();
 
@@ -400,7 +346,7 @@ export function postRendering() {
     },
   });
 
-  let iterations = 2;
+  let iterations = 1;
 
   let buffer0 = atomPingBuffer.deref();
   let buffer1 = atomPongBuffer.deref();
@@ -431,7 +377,7 @@ export function postRendering() {
     layout: blurPipeline.getBindGroupLayout(1),
     entries: [
       { binding: 1, resource: filterTexture.createView() },
-      { binding: 2, resource: textures[0].createView() },
+      { binding: 2, resource: pingTexture.createView() },
       { binding: 3, resource: { buffer: buffer0 } },
     ],
   });
@@ -439,8 +385,8 @@ export function postRendering() {
   const computeBindGroup1 = device.createBindGroup({
     layout: blurPipeline.getBindGroupLayout(1),
     entries: [
-      { binding: 1, resource: textures[0].createView() },
-      { binding: 2, resource: textures[1].createView() },
+      { binding: 1, resource: pingTexture.createView() },
+      { binding: 2, resource: pongTexture.createView() },
       { binding: 3, resource: { buffer: buffer1 } },
     ],
   });
@@ -448,8 +394,8 @@ export function postRendering() {
   const computeBindGroup2 = device.createBindGroup({
     layout: blurPipeline.getBindGroupLayout(1),
     entries: [
-      { binding: 1, resource: textures[1].createView() },
-      { binding: 2, resource: textures[0].createView() },
+      { binding: 1, resource: pongTexture.createView() },
+      { binding: 2, resource: pingTexture.createView() },
       { binding: 3, resource: { buffer: buffer0 } },
     ],
   });
@@ -502,7 +448,7 @@ export function postRendering() {
     layout: fullscreenQuadPipeline.getBindGroupLayout(0),
     entries: [
       { binding: 0, resource: sampler },
-      { binding: 1, resource: textures[0].createView() },
+      { binding: 1, resource: pingTexture.createView() },
       { binding: 2, resource: canvasTexture.createView() },
     ],
   });
@@ -535,74 +481,6 @@ export function renderLagopusTree(tree: LagopusElement, dispatch: (op: any, data
 export function resetCanvasHeight(canvas: HTMLCanvasElement) {
   // canvas height not accurate on Android Pad, use innerHeight
   canvas.style.height = `${window.innerHeight}px`;
-}
-
-/** create a texture for canvas */
-export function initializeCanvasTextures() {
-  let device = atomDevice.deref();
-  let texture = device.createTexture({
-    size: [window.innerWidth * devicePixelRatio, window.innerHeight * devicePixelRatio],
-    format: "bgra8unorm",
-    usage: GPUTextureUsage.COPY_SRC | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
-    // usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
-  });
-  atomCanvasTexture.reset(texture);
-
-  let filterTexture = device.createTexture({
-    size: [window.innerWidth * devicePixelRatio, window.innerHeight * devicePixelRatio],
-    format: "bgra8unorm",
-    usage: GPUTextureUsage.COPY_SRC | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
-    // usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
-  });
-  atomFilterTexture.reset(filterTexture);
-
-  const depthTexture = device.createTexture({
-    size: [window.innerWidth * devicePixelRatio, window.innerHeight * devicePixelRatio],
-    // format: "depth24plus",
-    // usage: GPUTextureUsage.RENDER_ATTACHMENT,
-    dimension: "2d",
-    format: "depth24plus-stencil8",
-    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
-  });
-
-  atomDepthTexture.reset(depthTexture);
-
-  const buffer0 = (() => {
-    const buffer = device.createBuffer({
-      size: 4,
-      mappedAtCreation: true,
-      usage: GPUBufferUsage.UNIFORM,
-    });
-    new Uint32Array(buffer.getMappedRange())[0] = 0;
-    buffer.unmap();
-    return buffer;
-  })();
-
-  const buffer1 = (() => {
-    const buffer = device.createBuffer({
-      size: 4,
-      mappedAtCreation: true,
-      usage: GPUBufferUsage.UNIFORM,
-    });
-    new Uint32Array(buffer.getMappedRange())[0] = 1;
-    buffer.unmap();
-    return buffer;
-  })();
-
-  const buffer2 = (() => {
-    const buffer = device.createBuffer({
-      size: 4,
-      mappedAtCreation: true,
-      usage: GPUBufferUsage.UNIFORM,
-    });
-    new Uint32Array(buffer.getMappedRange())[0] = 1;
-    buffer.unmap();
-    return buffer;
-  })();
-
-  atomPingBuffer.reset(buffer0);
-  atomPongBuffer.reset(buffer1);
-  atomScreenFilterBuffer.reset(buffer2);
 }
 
 /** some size from https://www.w3.org/TR/webgpu/#vertex-formats */
