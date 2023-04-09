@@ -1,5 +1,5 @@
 import { paintLagopusTree, renderLagopusTree, resetCanvasHeight } from "./render.mjs";
-import { initializeCanvasTextures, initializeContext } from "./initialize.js";
+import { enableBloom, initializeCanvasTextures, initializeContext } from "./initialize.js";
 
 import { compContainer } from "./app/container.mjs";
 import { renderControl, startControlLoop } from "@triadica/touch-control";
@@ -8,6 +8,7 @@ import { setupMouseEvents } from "./events.mjs";
 import { Atom } from "./atom.mjs";
 import { V3 } from "./primes.mjs";
 import { atomClearColor } from "./global.mjs";
+import { ua } from "./config.mjs";
 
 let store = new Atom({
   position: [180, 80, 80] as V3,
@@ -29,6 +30,10 @@ function renderApp() {
 }
 
 window.onload = async () => {
+  if (ua.os.name.includes("Mac OS")) {
+    enableBloom();
+  }
+
   await initializeContext();
   initializeCanvasTextures();
   atomClearColor.reset({ r: 0.4, g: 0.4, b: 0.4, a: 1.0 });

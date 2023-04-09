@@ -1,6 +1,6 @@
 {
   "name": "@triadica/lagopus",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "type": "module",
   "main": "./lib/index.mjs",
   "scripts": {
@@ -16,6 +16,8 @@
   },
   "dependencies": {
     "@triadica/touch-control": "^0.0.2",
-    "ismobilejs": "^1.1.1"
+    "@types/ua-parser-js": "^0.7.36",
+    "ismobilejs": "^1.1.1",
+    "ua-parser-js": "^1.0.35"
   }
 }

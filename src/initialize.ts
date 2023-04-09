@@ -9,6 +9,7 @@ import {
   atomPongBuffer,
   atomPingTexture,
   atomPongTexture,
+  atomBloomEnabled,
 } from "./global.mjs";
 
 /** init canvas context */
@@ -63,6 +64,21 @@ export function initializeCanvasTextures() {
   let width = window.innerWidth * devicePixelRatio;
   let height = window.innerHeight * devicePixelRatio;
 
+  const depthTexture = device.createTexture({
+    size: [width, height],
+    // format: "depth24plus",
+    // usage: GPUTextureUsage.RENDER_ATTACHMENT,
+    dimension: "2d",
+    format: "depth24plus-stencil8",
+    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+  });
+
+  atomDepthTexture.reset(depthTexture);
+  if (!atomBloomEnabled.deref()) {
+    // disabled
+    return;
+  }
+
   let texture = device.createTexture({
     size: [width, height],
     format: "bgra8unorm",
@@ -78,17 +94,6 @@ export function initializeCanvasTextures() {
     // usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
   });
   atomFilterTexture.reset(filterTexture);
-
-  const depthTexture = device.createTexture({
-    size: [width, height],
-    // format: "depth24plus",
-    // usage: GPUTextureUsage.RENDER_ATTACHMENT,
-    dimension: "2d",
-    format: "depth24plus-stencil8",
-    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
-  });
-
-  atomDepthTexture.reset(depthTexture);
 
   const buffer0 = (() => {
     const buffer = device.createBuffer({
@@ -141,4 +146,9 @@ export function initializeCanvasTextures() {
 
   atomPingTexture.reset(pingTexture);
   atomPongTexture.reset(pongTexture);
+}
+
+/** enabled bloom effect */
+export function enableBloom() {
+  atomBloomEnabled.reset(true);
 }

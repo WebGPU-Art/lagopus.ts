@@ -41,3 +41,6 @@ export function wLog<T extends any>(message: string, a: T): T {
   console.warn(message, a);
   return a;
 }
+
+/** to enabled */
+export let atomBloomEnabled = new Atom(false);

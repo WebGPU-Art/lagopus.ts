@@ -16,6 +16,7 @@ import {
   atomFilterTexture,
   atomPingTexture,
   atomPongTexture,
+  atomBloomEnabled,
 } from "./global.mjs";
 import { coneBackScale } from "./config.mjs";
 import { atomViewerPosition, atomViewerUpward, newLookatPoint } from "./perspective.mjs";
@@ -202,8 +203,15 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
 
   atomBufferNeedClear.reset(false);
 
+  let renderTarget: GPUTexture;
+  if (atomBloomEnabled.deref()) {
+    renderTarget = atomCanvasTexture.deref();
+  } else {
+    renderTarget = context.getCurrentTexture();
+  }
+
   // renderPassDescriptor.colorAttachments[0].view = context.getCurrentTexture().createView();
-  renderPassDescriptor.colorAttachments[0].view = atomCanvasTexture.deref().createView();
+  renderPassDescriptor.colorAttachments[0].view = renderTarget.createView();
   renderPassDescriptor.depthStencilAttachment.view = depthTexture.createView();
   const commandEncoder = atomCommandEncoder.deref();
   const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
@@ -264,7 +272,9 @@ export function paintLagopusTree() {
   let tree = atomLagopusTree.deref();
   collectBuffers(tree);
 
-  postRendering();
+  if (atomBloomEnabled.deref()) {
+    postRendering();
+  }
 
   // load shared device
   let commandEncoder = atomCommandEncoder.deref();

@@ -2,7 +2,7 @@ export { group, object, u32buffer, newBufferFormatLength } from "./alias.mjs";
 
 export { createRenderer, paintLagopusTree, renderLagopusTree, resetCanvasHeight } from "./render.mjs";
 
-export { initializeContext } from "./initialize.js";
+export { initializeContext, enableBloom } from "./initialize.js";
 
 export { compButton, compDragPoint, compSlider } from "./comp/button.mjs";
 

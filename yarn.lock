@@ -131,6 +131,11 @@
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-1.0.0.tgz#5fb2e536c1ae9bf35366eed879e827fa59ca41c2"
   integrity sha512-WulqXMDUTYAXCjZnk6JtIHPigp55cVtDgDrO2gHRwhyJto21+1zbVCtOYB2L1F9w4qCQ0rOGWBnBe0FNTiEJIQ==
 
+"@types/ua-parser-js@^0.7.36":
+  version "0.7.36"
+  resolved "https://registry.yarnpkg.com/@types/ua-parser-js/-/ua-parser-js-0.7.36.tgz#9bd0b47f26b5a3151be21ba4ce9f5fa457c5f190"
+  integrity sha512-N1rW+njavs70y2cApeIw1vLMYXRwfBy+7trgavGuuTfOd7j1Yh7QTRc/yqsPl6ncokt72ZXuxEU0PiCp9bSwNQ==
+
 "@webgpu/types@^0.1.30":
   version "0.1.30"
   resolved "https://registry.yarnpkg.com/@webgpu/types/-/types-0.1.30.tgz#b6406dc4a1c1e0d469028ceb30ddffbbd2fa706c"
@@ -262,6 +267,11 @@ typescript@^5.0.2:
   version "5.0.2"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.0.2.tgz#891e1a90c5189d8506af64b9ef929fca99ba1ee5"
   integrity sha512-wVORMBGO/FAs/++blGNeAVdbNKtIh1rbBL2EyQ1+J9lClJ93KiiKe8PmFIVdXhHcyv44SL9oglmfeSsndo0jRw==
+
+ua-parser-js@^1.0.35:
+  version "1.0.35"
+  resolved "https://registry.yarnpkg.com/ua-parser-js/-/ua-parser-js-1.0.35.tgz#c4ef44343bc3db0a3cbefdf21822f1b1fc1ab011"
+  integrity sha512-fKnGuqmTBnIE+/KXSzCn4db8RTigUzw1AN0DmdU6hJovUTbYJKyqj+8Mt1c4VfRDnOVJnENmfYkIPZ946UrSAA==
 
 vite-plugin-glsl@^1.1.2:
   version "1.1.2"
