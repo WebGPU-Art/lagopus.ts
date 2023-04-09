@@ -13,12 +13,15 @@ import {
   atomCommandEncoder,
   atomPingBuffer,
   atomPongBuffer,
+  atomScreenFilterBuffer,
+  atomFilterTexture,
 } from "./global.mjs";
 import { coneBackScale } from "./config.mjs";
 import { atomViewerPosition, atomViewerUpward, newLookatPoint } from "./perspective.mjs";
 import { vNormalize, vCross, vLength } from "./quaternion.mjs";
 import fullscreenWgsl from "../shaders/fullscreen.wgsl";
 import blurWGSL from "../shaders/blur.wgsl";
+import screenFilterWgsl from "../shaders/screen-filter.wgsl";
 
 /** init canvas context */
 export const initializeContext = async (): Promise<any> => {
@@ -320,31 +323,14 @@ export function postRendering() {
   let width = window.innerWidth * devicePixelRatio;
   let height = window.innerHeight * devicePixelRatio;
 
-  // previously rendered to canvasTexture, not post-process
-
+  let sampler = device.createSampler({
+    magFilter: "linear",
+    minFilter: "linear",
+  });
+  const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
   const commandEncoder = atomCommandEncoder.deref();
 
-  const blurPipeline = device.createComputePipeline({
-    layout: "auto",
-    compute: {
-      module: device.createShaderModule({
-        code: blurWGSL,
-      }),
-      entryPoint: "main",
-    },
-  });
-
-  let iterations = 1;
-
-  let buffer0 = atomPingBuffer.deref();
-  let buffer1 = atomPongBuffer.deref();
-  const blurParamsBuffer = device.createBuffer({
-    size: 8,
-    usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
-  });
-
-  device.queue.writeBuffer(blurParamsBuffer, 0, new Uint32Array([20, 90]));
-
+  // TODO
   const textures = [0, 1].map(() => {
     return device.createTexture({
       size: {
@@ -356,10 +342,74 @@ export function postRendering() {
     });
   });
 
-  let sampler = device.createSampler({
-    magFilter: "linear",
-    minFilter: "linear",
+  const filterTexture = atomFilterTexture.deref();
+
+  // previously rendered to canvasTexture. filter bright colors
+
+  const screenQuadFilterPipeline = device.createRenderPipeline({
+    layout: "auto",
+    vertex: {
+      module: device.createShaderModule({
+        code: screenFilterWgsl,
+      }),
+      entryPoint: "vert_main",
+    },
+    fragment: {
+      module: device.createShaderModule({
+        code: screenFilterWgsl,
+      }),
+      entryPoint: "frag_main",
+      targets: [{ format: presentationFormat }],
+    },
+    primitive: { topology: "triangle-list" },
   });
+
+  const filterResultBindGroup = device.createBindGroup({
+    layout: screenQuadFilterPipeline.getBindGroupLayout(0),
+    entries: [
+      { binding: 0, resource: sampler },
+      { binding: 1, resource: canvasTexture.createView() },
+    ],
+  });
+
+  const filterPassEncoder = commandEncoder.beginRenderPass({
+    colorAttachments: [
+      {
+        view: filterTexture.createView(),
+        clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
+        loadOp: "clear",
+        storeOp: "store",
+      },
+    ],
+  });
+
+  filterPassEncoder.setPipeline(screenQuadFilterPipeline);
+  filterPassEncoder.setBindGroup(0, filterResultBindGroup);
+  filterPassEncoder.draw(6, 1, 0, 0);
+  filterPassEncoder.end();
+
+  // doing post-process of blur
+
+  const blurPipeline = device.createComputePipeline({
+    layout: "auto",
+    compute: {
+      module: device.createShaderModule({
+        code: blurWGSL,
+      }),
+      entryPoint: "main",
+    },
+  });
+
+  let iterations = 2;
+
+  let buffer0 = atomPingBuffer.deref();
+  let buffer1 = atomPongBuffer.deref();
+  const blurParamsBuffer = device.createBuffer({
+    size: 8,
+    usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
+  });
+
+  device.queue.writeBuffer(blurParamsBuffer, 0, new Uint32Array([40, 20]));
 
   const computeConstants = device.createBindGroup({
     layout: blurPipeline.getBindGroupLayout(0),
@@ -380,60 +430,27 @@ export function postRendering() {
   const computeBindGroup0 = device.createBindGroup({
     layout: blurPipeline.getBindGroupLayout(1),
     entries: [
-      {
-        binding: 1,
-        resource: canvasTexture.createView(),
-      },
-      {
-        binding: 2,
-        resource: textures[0].createView(),
-      },
-      {
-        binding: 3,
-        resource: {
-          buffer: buffer0,
-        },
-      },
+      { binding: 1, resource: filterTexture.createView() },
+      { binding: 2, resource: textures[0].createView() },
+      { binding: 3, resource: { buffer: buffer0 } },
     ],
   });
 
   const computeBindGroup1 = device.createBindGroup({
     layout: blurPipeline.getBindGroupLayout(1),
     entries: [
-      {
-        binding: 1,
-        resource: textures[0].createView(),
-      },
-      {
-        binding: 2,
-        resource: textures[1].createView(),
-      },
-      {
-        binding: 3,
-        resource: {
-          buffer: buffer1,
-        },
-      },
+      { binding: 1, resource: textures[0].createView() },
+      { binding: 2, resource: textures[1].createView() },
+      { binding: 3, resource: { buffer: buffer1 } },
     ],
   });
 
   const computeBindGroup2 = device.createBindGroup({
     layout: blurPipeline.getBindGroupLayout(1),
     entries: [
-      {
-        binding: 1,
-        resource: textures[1].createView(),
-      },
-      {
-        binding: 2,
-        resource: textures[0].createView(),
-      },
-      {
-        binding: 3,
-        resource: {
-          buffer: buffer0,
-        },
-      },
+      { binding: 1, resource: textures[1].createView() },
+      { binding: 2, resource: textures[0].createView() },
+      { binding: 3, resource: { buffer: buffer0 } },
     ],
   });
 
@@ -463,8 +480,6 @@ export function postRendering() {
 
   // now we need to render it to real canvas
 
-  const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
-
   const fullscreenQuadPipeline = device.createRenderPipeline({
     layout: "auto",
     vertex: {
@@ -478,36 +493,21 @@ export function postRendering() {
         code: fullscreenWgsl,
       }),
       entryPoint: "frag_main",
-      targets: [
-        {
-          format: presentationFormat,
-        },
-      ],
+      targets: [{ format: presentationFormat }],
     },
-    primitive: {
-      topology: "triangle-list",
-    },
+    primitive: { topology: "triangle-list" },
   });
 
   const showResultBindGroup = device.createBindGroup({
     layout: fullscreenQuadPipeline.getBindGroupLayout(0),
     entries: [
-      {
-        binding: 0,
-        resource: sampler,
-      },
-      {
-        binding: 1,
-        resource: textures[0].createView(),
-      },
-      {
-        binding: 2,
-        resource: canvasTexture.createView(),
-      },
+      { binding: 0, resource: sampler },
+      { binding: 1, resource: textures[0].createView() },
+      { binding: 2, resource: canvasTexture.createView() },
     ],
   });
 
-  const passEncoder = commandEncoder.beginRenderPass({
+  const showPassEncoder = commandEncoder.beginRenderPass({
     colorAttachments: [
       {
         view: context.getCurrentTexture().createView(),
@@ -518,10 +518,10 @@ export function postRendering() {
     ],
   });
 
-  passEncoder.setPipeline(fullscreenQuadPipeline);
-  passEncoder.setBindGroup(0, showResultBindGroup);
-  passEncoder.draw(6, 1, 0, 0);
-  passEncoder.end();
+  showPassEncoder.setPipeline(fullscreenQuadPipeline);
+  showPassEncoder.setBindGroup(0, showResultBindGroup);
+  showPassEncoder.draw(6, 1, 0, 0);
+  showPassEncoder.end();
 }
 
 /** track tree, internally it calls `paintLagopusTree` to render */
@@ -547,6 +547,14 @@ export function initializeCanvasTextures() {
     // usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
   });
   atomCanvasTexture.reset(texture);
+
+  let filterTexture = device.createTexture({
+    size: [window.innerWidth * devicePixelRatio, window.innerHeight * devicePixelRatio],
+    format: "bgra8unorm",
+    usage: GPUTextureUsage.COPY_SRC | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+    // usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
+  });
+  atomFilterTexture.reset(filterTexture);
 
   const depthTexture = device.createTexture({
     size: [window.innerWidth * devicePixelRatio, window.innerHeight * devicePixelRatio],
@@ -581,8 +589,20 @@ export function initializeCanvasTextures() {
     return buffer;
   })();
 
-  atomPingBuffer.value = buffer0;
-  atomPongBuffer.value = buffer1;
+  const buffer2 = (() => {
+    const buffer = device.createBuffer({
+      size: 4,
+      mappedAtCreation: true,
+      usage: GPUBufferUsage.UNIFORM,
+    });
+    new Uint32Array(buffer.getMappedRange())[0] = 1;
+    buffer.unmap();
+    return buffer;
+  })();
+
+  atomPingBuffer.reset(buffer0);
+  atomPongBuffer.reset(buffer1);
+  atomScreenFilterBuffer.reset(buffer2);
 }
 
 /** some size from https://www.w3.org/TR/webgpu/#vertex-formats */
