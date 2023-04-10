@@ -135,14 +135,7 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
 
   let uniformBindGroup = device.createBindGroup({
     layout: uniformBindGroupLayout,
-    entries: [
-      {
-        binding: 0,
-        resource: {
-          buffer: uniformBuffer,
-        },
-      },
-    ],
+    entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
   });
 
   const pipelineLayoutDesc = { bindGroupLayouts: [uniformBindGroupLayout] };
@@ -160,11 +153,7 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
     fragment: {
       module: shaderModule,
       entryPoint: "fragment_main",
-      targets: [
-        {
-          format: presentationFormat,
-        },
-      ],
+      targets: [{ format: presentationFormat }],
     },
     primitive: {
       topology,
@@ -180,6 +169,13 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
 
   let needClear = atomBufferNeedClear.deref();
 
+  let renderTarget: GPUTexture;
+  if (atomBloomEnabled.deref()) {
+    renderTarget = atomCanvasTexture.deref();
+  } else {
+    renderTarget = context.getCurrentTexture();
+  }
+
   // ~~ CREATE RENDER PASS DESCRIPTOR ~~
   const renderPassDescriptor = {
     colorAttachments: [
@@ -187,11 +183,12 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
         clearValue: atomClearColor.value ?? { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
         loadOp: (needClear ? "clear" : "load") as GPULoadOp,
         storeOp: "store" as GPUStoreOp,
-        view: null as GPUTextureView,
+        // view: context.getCurrentTexture().createView()
+        view: renderTarget.createView(),
       },
     ],
     depthStencilAttachment: {
-      view: null as GPUTextureView,
+      view: depthTexture.createView(),
       depthClearValue: 1,
       depthLoadOp: (needClear ? "clear" : "load") as GPULoadOp,
       depthStoreOp: "store" as GPUStoreOp,
@@ -203,16 +200,6 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
 
   atomBufferNeedClear.reset(false);
 
-  let renderTarget: GPUTexture;
-  if (atomBloomEnabled.deref()) {
-    renderTarget = atomCanvasTexture.deref();
-  } else {
-    renderTarget = context.getCurrentTexture();
-  }
-
-  // renderPassDescriptor.colorAttachments[0].view = context.getCurrentTexture().createView();
-  renderPassDescriptor.colorAttachments[0].view = renderTarget.createView();
-  renderPassDescriptor.depthStencilAttachment.view = depthTexture.createView();
   const commandEncoder = atomCommandEncoder.deref();
   const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
 
