@@ -64,16 +64,22 @@ export function initializeCanvasTextures() {
   let width = window.innerWidth * devicePixelRatio;
   let height = window.innerHeight * devicePixelRatio;
 
-  const depthTexture = device.createTexture({
-    size: [width, height],
-    // format: "depth24plus",
-    // usage: GPUTextureUsage.RENDER_ATTACHMENT,
-    dimension: "2d",
-    format: "depth24plus-stencil8",
-    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
-  });
+  if (atomBloomEnabled.deref() || !atomDepthTexture.deref()) {
+    // TODO dirty fix
+    // still need to handle dynamic canvas https://webgpu.github.io/webgpu-samples/samples/resizeCanvas
 
-  atomDepthTexture.reset(depthTexture);
+    const depthTexture = device.createTexture({
+      size: [width, height],
+      // format: "depth24plus",
+      // usage: GPUTextureUsage.RENDER_ATTACHMENT,
+      dimension: "2d",
+      format: "depth24plus-stencil8",
+      usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+    });
+
+    atomDepthTexture.reset(depthTexture);
+  }
+
   if (!atomBloomEnabled.deref()) {
     // disabled
     return;
