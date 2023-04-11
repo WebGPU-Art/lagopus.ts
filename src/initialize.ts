@@ -64,38 +64,36 @@ export function initializeCanvasTextures() {
   let width = window.innerWidth * devicePixelRatio;
   let height = window.innerHeight * devicePixelRatio;
 
-  if (atomBloomEnabled.deref() || !atomDepthTexture.deref()) {
-    // TODO dirty fix
-    // still need to handle dynamic canvas https://webgpu.github.io/webgpu-samples/samples/resizeCanvas
+  const depthTexture = device.createTexture({
+    size: [width, height],
+    // format: "depth24plus",
+    // usage: GPUTextureUsage.RENDER_ATTACHMENT,
+    dimension: "2d",
+    format: "depth24plus-stencil8",
+    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+    // sampleCount: atomBloomEnabled.deref() ? undefined : 4,
+  });
 
-    const depthTexture = device.createTexture({
-      size: [width, height],
-      // format: "depth24plus",
-      // usage: GPUTextureUsage.RENDER_ATTACHMENT,
-      dimension: "2d",
-      format: "depth24plus-stencil8",
-      usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
-    });
+  atomDepthTexture.reset(depthTexture);
 
-    atomDepthTexture.reset(depthTexture);
-  }
+  let texture = device.createTexture({
+    size: [width, height],
+    format: "bgra8unorm",
+    // sampleCount: atomBloomEnabled.deref() ? undefined : 4,
+    usage: GPUTextureUsage.COPY_SRC | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+  });
+
+  atomCanvasTexture.reset(texture);
 
   if (!atomBloomEnabled.deref()) {
     // disabled
     return;
   }
 
-  let texture = device.createTexture({
-    size: [width, height],
-    format: "bgra8unorm",
-    usage: GPUTextureUsage.COPY_SRC | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
-    // usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
-  });
-  atomCanvasTexture.reset(texture);
-
   let filterTexture = device.createTexture({
     size: [width, height],
     format: "bgra8unorm",
+
     usage: GPUTextureUsage.COPY_SRC | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
     // usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
   });

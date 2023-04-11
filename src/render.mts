@@ -133,7 +133,7 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
     ],
   });
 
-  let uniformBindGroup = device.createBindGroup({
+  let uniformBindGroup: GPUBindGroup = device.createBindGroup({
     layout: uniformBindGroupLayout,
     entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
   });
@@ -165,26 +165,20 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
       depthCompare: "less",
       format: "depth24plus-stencil8",
     },
+    // multisample: atomBloomEnabled.deref() ? undefined : { count: 4 },
   });
 
   let needClear = atomBufferNeedClear.deref();
 
-  let renderTarget: GPUTexture;
-  if (atomBloomEnabled.deref()) {
-    renderTarget = atomCanvasTexture.deref();
-  } else {
-    renderTarget = context.getCurrentTexture();
-  }
-
   // ~~ CREATE RENDER PASS DESCRIPTOR ~~
-  const renderPassDescriptor = {
+  const renderPassDescriptor: GPURenderPassDescriptor = {
     colorAttachments: [
       {
         clearValue: atomClearColor.value ?? { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
         loadOp: (needClear ? "clear" : "load") as GPULoadOp,
         storeOp: "store" as GPUStoreOp,
-        // view: context.getCurrentTexture().createView()
-        view: renderTarget.createView(),
+        view: atomBloomEnabled.deref() ? atomCanvasTexture.deref().createView() : context.getCurrentTexture().createView(),
+        // resolveTarget: atomBloomEnabled.deref() ? undefined : context.getCurrentTexture().createView(),
       },
     ],
     depthStencilAttachment: {
@@ -192,7 +186,6 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
       depthClearValue: 1,
       depthLoadOp: (needClear ? "clear" : "load") as GPULoadOp,
       depthStoreOp: "store" as GPUStoreOp,
-      stentialClearValue: 0,
       stencilLoadOp: "clear" as GPULoadOp,
       stencilStoreOp: "store" as GPUStoreOp,
     },
@@ -305,6 +298,7 @@ export function postRendering() {
       targets: [{ format: presentationFormat }],
     },
     primitive: { topology: "triangle-list" },
+    // multisample: atomBloomEnabled.deref() ? undefined : { count: 4 },
   });
 
   const filterResultBindGroup = device.createBindGroup({
@@ -475,9 +469,12 @@ export function renderLagopusTree(tree: LagopusElement, dispatch: (op: any, data
   paintLagopusTree();
 }
 
-export function resetCanvasHeight(canvas: HTMLCanvasElement) {
+export function resetCanvasSize(canvas: HTMLCanvasElement) {
   // canvas height not accurate on Android Pad, use innerHeight
   canvas.style.height = `${window.innerHeight}px`;
+  canvas.style.width = `${window.innerWidth}px`;
+  canvas.height = window.innerHeight * devicePixelRatio;
+  canvas.width = window.innerWidth * devicePixelRatio;
 }
 
 /** some size from https://www.w3.org/TR/webgpu/#vertex-formats */

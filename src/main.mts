@@ -1,4 +1,4 @@
-import { paintLagopusTree, renderLagopusTree, resetCanvasHeight } from "./render.mjs";
+import { paintLagopusTree, renderLagopusTree, resetCanvasSize } from "./render.mjs";
 import { enableBloom, initializeCanvasTextures, initializeContext } from "./initialize.js";
 
 import { compContainer } from "./app/container.mjs";
@@ -45,11 +45,11 @@ window.onload = async () => {
   startControlLoop(10, onControlEvent);
 
   window.onresize = () => {
-    resetCanvasHeight(canvas);
+    resetCanvasSize(canvas);
     initializeCanvasTextures();
     paintLagopusTree();
   };
-  resetCanvasHeight(canvas);
+  resetCanvasSize(canvas);
 
   window.__lagopusHandleCompilationInfo = (e, code) => {
     if (e.messages.length) {
