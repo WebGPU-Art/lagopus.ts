@@ -1,6 +1,8 @@
 export { group, object, u32buffer, newBufferFormatLength } from "./alias.mjs";
 
-export { createRenderer, initializeContext, paintLagopusTree, renderLagopusTree, resetCanvasHeight } from "./render.mjs";
+export { createRenderer, paintLagopusTree, renderLagopusTree, resetCanvasSize } from "./render.mjs";
+
+export { initializeContext, enableBloom, initializeCanvasTextures } from "./initialize.js";
 
 export { compButton, compDragPoint, compSlider } from "./comp/button.mjs";
 

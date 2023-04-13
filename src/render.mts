@@ -9,67 +9,21 @@ import {
   atomObjectsTree,
   atomClearColor,
   wLog,
+  atomCanvasTexture,
+  atomCommandEncoder,
+  atomPingBuffer,
+  atomPongBuffer,
+  atomFilterTexture,
+  atomPingTexture,
+  atomPongTexture,
+  atomBloomEnabled,
 } from "./global.mjs";
 import { coneBackScale } from "./config.mjs";
 import { atomViewerPosition, atomViewerUpward, newLookatPoint } from "./perspective.mjs";
 import { vNormalize, vCross, vLength } from "./quaternion.mjs";
-
-/** init canvas context */
-export const initializeContext = async (): Promise<any> => {
-  // ~~ INITIALIZE ~~ Make sure we can initialize WebGPU
-  if (!navigator.gpu) {
-    console.error("WebGPU cannot be initialized - navigator.gpu not found");
-    return null;
-  }
-  const adapter = await navigator.gpu.requestAdapter();
-  if (!adapter) {
-    console.error("WebGPU cannot be initialized - Adapter not found");
-    return null;
-  }
-  const device = await adapter.requestDevice();
-  device.lost.then(() => {
-    console.error("WebGPU cannot be initialized - Device has been lost");
-    return null;
-  });
-
-  // set as a shared device
-  atomDevice.reset(device);
-
-  const canvas = document.getElementById("canvas-container") as HTMLCanvasElement;
-  const context = canvas.getContext("webgpu");
-  if (!context) {
-    console.error("WebGPU cannot be initialized - Canvas does not support WebGPU");
-    return null;
-  }
-
-  // ~~ CONFIGURE THE SWAP CHAIN ~~
-  const devicePixelRatio = window.devicePixelRatio || 1;
-  const presentationFormat = window.navigator.gpu.getPreferredCanvasFormat();
-
-  canvas.width = window.innerWidth * devicePixelRatio;
-  canvas.height = window.innerHeight * devicePixelRatio;
-
-  context.configure({
-    device,
-    format: presentationFormat,
-    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
-    alphaMode: "premultiplied",
-  });
-
-  // set as a shared context
-  atomContext.reset(context);
-
-  const depthTexture = device.createTexture({
-    size: [window.innerWidth * devicePixelRatio, window.innerHeight * devicePixelRatio],
-    // format: "depth24plus",
-    // usage: GPUTextureUsage.RENDER_ATTACHMENT,
-    dimension: "2d",
-    format: "depth24plus-stencil8",
-    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
-  });
-
-  atomDepthTexture.reset(depthTexture);
-};
+import fullscreenWgsl from "../shaders/fullscreen.wgsl";
+import blurWGSL from "../shaders/blur.wgsl";
+import screenFilterWgsl from "../shaders/screen-filter.wgsl";
 
 /** prepare vertex buffer from object */
 export let createRenderer = (
@@ -126,7 +80,7 @@ export let createRenderer = (
   };
 };
 
-let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
+let buildCommandBuffer = (info: LagopusObjectData): void => {
   let { topology, shaderModule, vertexBuffersDescriptors, vertexBuffers, indices } = info;
 
   let device = atomDevice.deref();
@@ -166,9 +120,7 @@ let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
     ...(info.addUniform?.() || []),
   ]);
 
-  let uniformBuffer: GPUBuffer = null;
-
-  uniformBuffer = createBuffer(uniformData, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST);
+  let uniformBuffer = createBuffer(uniformData, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST);
   // console.log(info.addUniform?.(), uniformData.length, uniformBuffer);
 
   let uniformBindGroupLayout = device.createBindGroupLayout({
@@ -181,16 +133,9 @@ let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
     ],
   });
 
-  let uniformBindGroup = device.createBindGroup({
+  let uniformBindGroup: GPUBindGroup = device.createBindGroup({
     layout: uniformBindGroupLayout,
-    entries: [
-      {
-        binding: 0,
-        resource: {
-          buffer: uniformBuffer,
-        },
-      },
-    ],
+    entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
   });
 
   const pipelineLayoutDesc = { bindGroupLayouts: [uniformBindGroupLayout] };
@@ -208,11 +153,7 @@ let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
     fragment: {
       module: shaderModule,
       entryPoint: "fragment_main",
-      targets: [
-        {
-          format: presentationFormat,
-        },
-      ],
+      targets: [{ format: presentationFormat }],
     },
     primitive: {
       topology,
@@ -224,26 +165,27 @@ let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
       depthCompare: "less",
       format: "depth24plus-stencil8",
     },
+    // multisample: atomBloomEnabled.deref() ? undefined : { count: 4 },
   });
 
   let needClear = atomBufferNeedClear.deref();
 
   // ~~ CREATE RENDER PASS DESCRIPTOR ~~
-  const renderPassDescriptor = {
+  const renderPassDescriptor: GPURenderPassDescriptor = {
     colorAttachments: [
       {
         clearValue: atomClearColor.value ?? { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
         loadOp: (needClear ? "clear" : "load") as GPULoadOp,
         storeOp: "store" as GPUStoreOp,
-        view: null as GPUTextureView,
+        view: atomBloomEnabled.deref() ? atomCanvasTexture.deref().createView() : context.getCurrentTexture().createView(),
+        // resolveTarget: atomBloomEnabled.deref() ? undefined : context.getCurrentTexture().createView(),
       },
     ],
     depthStencilAttachment: {
-      view: null as GPUTextureView,
+      view: depthTexture.createView(),
       depthClearValue: 1,
       depthLoadOp: (needClear ? "clear" : "load") as GPULoadOp,
       depthStoreOp: "store" as GPUStoreOp,
-      stentialClearValue: 0,
       stencilLoadOp: "clear" as GPULoadOp,
       stencilStoreOp: "store" as GPUStoreOp,
     },
@@ -251,9 +193,7 @@ let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
 
   atomBufferNeedClear.reset(false);
 
-  renderPassDescriptor.colorAttachments[0].view = context.getCurrentTexture().createView();
-  renderPassDescriptor.depthStencilAttachment.view = depthTexture.createView();
-  const commandEncoder = device.createCommandEncoder();
+  const commandEncoder = atomCommandEncoder.deref();
   const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
 
   passEncoder.setBindGroup(0, uniformBindGroup);
@@ -274,16 +214,14 @@ let buildCommandBuffer = (info: LagopusObjectData): GPUCommandBuffer => {
     passEncoder.draw(info.length);
   }
   passEncoder.end();
-
-  return commandEncoder.finish();
 };
 
-export let collectBuffers = (el: LagopusElement, buffers: GPUCommandBuffer[]) => {
+export let collectBuffers = (el: LagopusElement) => {
   if (el == null) return;
   if (el.type === "object") {
-    buffers.push(buildCommandBuffer(el));
+    buildCommandBuffer(el);
   } else {
-    el.children.forEach((child) => collectBuffers(child, buffers));
+    el.children.forEach((child) => collectBuffers(child));
   }
 };
 
@@ -307,14 +245,220 @@ const createBuffer = (arr: Float32Array | Uint32Array, usage: number) => {
 
 /** send command buffer to device and render */
 export function paintLagopusTree() {
+  let device = atomDevice.deref();
+  atomCommandEncoder.value = device.createCommandEncoder();
+
   atomBufferNeedClear.reset(true);
   let tree = atomLagopusTree.deref();
-  let bufferList: GPUCommandBuffer[] = [];
-  collectBuffers(tree, bufferList);
+  collectBuffers(tree);
+
+  if (atomBloomEnabled.deref()) {
+    postRendering();
+  }
 
   // load shared device
+  let commandEncoder = atomCommandEncoder.deref();
+  device.queue.submit([commandEncoder.finish()]);
+}
+
+export function postRendering() {
+  let canvasTexture = atomCanvasTexture.deref();
   let device = atomDevice.deref();
-  device.queue.submit(bufferList);
+  let context = atomContext.deref();
+  let width = window.innerWidth * devicePixelRatio;
+  let height = window.innerHeight * devicePixelRatio;
+
+  let sampler = device.createSampler({
+    magFilter: "linear",
+    minFilter: "linear",
+  });
+  const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
+  const commandEncoder = atomCommandEncoder.deref();
+
+  let pingTexture = atomPingTexture.deref();
+  let pongTexture = atomPongTexture.deref();
+
+  const filterTexture = atomFilterTexture.deref();
+
+  // previously rendered to canvasTexture. filter bright colors
+
+  const screenQuadFilterPipeline = device.createRenderPipeline({
+    layout: "auto",
+    vertex: {
+      module: device.createShaderModule({
+        code: screenFilterWgsl,
+      }),
+      entryPoint: "vert_main",
+    },
+    fragment: {
+      module: device.createShaderModule({
+        code: screenFilterWgsl,
+      }),
+      entryPoint: "frag_main",
+      targets: [{ format: presentationFormat }],
+    },
+    primitive: { topology: "triangle-list" },
+    // multisample: atomBloomEnabled.deref() ? undefined : { count: 4 },
+  });
+
+  const filterResultBindGroup = device.createBindGroup({
+    layout: screenQuadFilterPipeline.getBindGroupLayout(0),
+    entries: [
+      { binding: 0, resource: sampler },
+      { binding: 1, resource: canvasTexture.createView() },
+    ],
+  });
+
+  const filterPassEncoder = commandEncoder.beginRenderPass({
+    colorAttachments: [
+      {
+        view: filterTexture.createView(),
+        clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
+        loadOp: "clear",
+        storeOp: "store",
+      },
+    ],
+  });
+
+  filterPassEncoder.setPipeline(screenQuadFilterPipeline);
+  filterPassEncoder.setBindGroup(0, filterResultBindGroup);
+  filterPassEncoder.draw(6, 1, 0, 0);
+  filterPassEncoder.end();
+
+  // doing post-process of blur
+
+  const blurPipeline = device.createComputePipeline({
+    layout: "auto",
+    compute: {
+      module: device.createShaderModule({
+        code: blurWGSL,
+      }),
+      entryPoint: "main",
+    },
+  });
+
+  let iterations = 1;
+
+  let buffer0 = atomPingBuffer.deref();
+  let buffer1 = atomPongBuffer.deref();
+  const blurParamsBuffer = device.createBuffer({
+    size: 8,
+    usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
+  });
+
+  device.queue.writeBuffer(blurParamsBuffer, 0, new Uint32Array([40, 20]));
+
+  const computeConstants = device.createBindGroup({
+    layout: blurPipeline.getBindGroupLayout(0),
+    entries: [
+      {
+        binding: 0,
+        resource: sampler,
+      },
+      {
+        binding: 1,
+        resource: {
+          buffer: blurParamsBuffer,
+        },
+      },
+    ],
+  });
+
+  const computeBindGroup0 = device.createBindGroup({
+    layout: blurPipeline.getBindGroupLayout(1),
+    entries: [
+      { binding: 1, resource: filterTexture.createView() },
+      { binding: 2, resource: pingTexture.createView() },
+      { binding: 3, resource: { buffer: buffer0 } },
+    ],
+  });
+
+  const computeBindGroup1 = device.createBindGroup({
+    layout: blurPipeline.getBindGroupLayout(1),
+    entries: [
+      { binding: 1, resource: pingTexture.createView() },
+      { binding: 2, resource: pongTexture.createView() },
+      { binding: 3, resource: { buffer: buffer1 } },
+    ],
+  });
+
+  const computeBindGroup2 = device.createBindGroup({
+    layout: blurPipeline.getBindGroupLayout(1),
+    entries: [
+      { binding: 1, resource: pongTexture.createView() },
+      { binding: 2, resource: pingTexture.createView() },
+      { binding: 3, resource: { buffer: buffer0 } },
+    ],
+  });
+
+  const computePass = commandEncoder.beginComputePass();
+  computePass.setPipeline(blurPipeline);
+  computePass.setBindGroup(0, computeConstants);
+
+  computePass.setBindGroup(1, computeBindGroup0);
+  // computePass.dispatchWorkgroups(Math.ceil(height / 2), Math.ceil(width / 2), 4);
+  computePass.dispatchWorkgroups(width / 2, height / 4);
+
+  computePass.setBindGroup(1, computeBindGroup1);
+  // computePass.dispatchWorkgroups(Math.ceil(height), Math.ceil(width / batched));
+  computePass.dispatchWorkgroups(width / 2, height / 4);
+
+  for (let i = 0; i < iterations - 1; ++i) {
+    computePass.setBindGroup(1, computeBindGroup2);
+    // computePass.dispatchWorkgroups(Math.ceil(width), Math.ceil(height / batched));
+    computePass.dispatchWorkgroups(width / 2, height / 4);
+
+    computePass.setBindGroup(1, computeBindGroup1);
+    // computePass.dispatchWorkgroups(Math.ceil(height), Math.ceil(width / batched));
+    computePass.dispatchWorkgroups(width / 2, height / 4);
+  }
+
+  computePass.end();
+
+  // now we need to render it to real canvas
+
+  const fullscreenQuadPipeline = device.createRenderPipeline({
+    layout: "auto",
+    vertex: {
+      module: device.createShaderModule({
+        code: fullscreenWgsl,
+      }),
+      entryPoint: "vert_main",
+    },
+    fragment: {
+      module: device.createShaderModule({
+        code: fullscreenWgsl,
+      }),
+      entryPoint: "frag_main",
+      targets: [{ format: presentationFormat }],
+    },
+    primitive: { topology: "triangle-list" },
+  });
+
+  const showResultBindGroup = device.createBindGroup({
+    layout: fullscreenQuadPipeline.getBindGroupLayout(0),
+    entries: [
+      { binding: 0, resource: sampler },
+      { binding: 1, resource: pingTexture.createView() },
+      { binding: 2, resource: canvasTexture.createView() },
+    ],
+  });
+
+  const showPassEncoder = commandEncoder.beginRenderPass({
+    colorAttachments: [
+      {
+        view: context.getCurrentTexture().createView(),
+        clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
+        loadOp: "clear",
+        storeOp: "store",
+      },
+    ],
+  });
+
+  showPassEncoder.setPipeline(fullscreenQuadPipeline);
+  showPassEncoder.setBindGroup(0, showResultBindGroup);
+  showPassEncoder.draw(6, 1, 0, 0);
+  showPassEncoder.end();
 }
 
 /** track tree, internally it calls `paintLagopusTree` to render */
@@ -325,9 +469,12 @@ export function renderLagopusTree(tree: LagopusElement, dispatch: (op: any, data
   paintLagopusTree();
 }
 
-export function resetCanvasHeight(canvas: HTMLCanvasElement) {
+export function resetCanvasSize(canvas: HTMLCanvasElement) {
   // canvas height not accurate on Android Pad, use innerHeight
   canvas.style.height = `${window.innerHeight}px`;
+  canvas.style.width = `${window.innerWidth}px`;
+  canvas.height = window.innerHeight * devicePixelRatio;
+  canvas.width = window.innerWidth * devicePixelRatio;
 }
 
 /** some size from https://www.w3.org/TR/webgpu/#vertex-formats */

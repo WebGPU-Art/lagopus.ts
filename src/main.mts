@@ -1,4 +1,5 @@
-import { initializeContext, paintLagopusTree, renderLagopusTree, resetCanvasHeight } from "./render.mjs";
+import { paintLagopusTree, renderLagopusTree, resetCanvasSize } from "./render.mjs";
+import { enableBloom, initializeCanvasTextures, initializeContext } from "./initialize.js";
 
 import { compContainer } from "./app/container.mjs";
 import { renderControl, startControlLoop } from "@triadica/touch-control";
@@ -7,6 +8,7 @@ import { setupMouseEvents } from "./events.mjs";
 import { Atom } from "./atom.mjs";
 import { V3 } from "./primes.mjs";
 import { atomClearColor } from "./global.mjs";
+import { isMobile } from "./config.mjs";
 
 let store = new Atom({
   position: [180, 80, 80] as V3,
@@ -28,8 +30,13 @@ function renderApp() {
 }
 
 window.onload = async () => {
+  if (!isMobile) {
+    enableBloom();
+  }
+
   await initializeContext();
-  atomClearColor.reset({ r: 0.92, g: 0.92, b: 0.92, a: 1.0 });
+  initializeCanvasTextures();
+  atomClearColor.reset({ r: 0.4, g: 0.4, b: 0.4, a: 1.0 });
   let canvas = document.querySelector("canvas");
   renderApp();
   console.log("loaded");
@@ -38,10 +45,11 @@ window.onload = async () => {
   startControlLoop(10, onControlEvent);
 
   window.onresize = () => {
-    resetCanvasHeight(canvas);
+    resetCanvasSize(canvas);
+    initializeCanvasTextures();
     paintLagopusTree();
   };
-  resetCanvasHeight(canvas);
+  resetCanvasSize(canvas);
 
   window.__lagopusHandleCompilationInfo = (e, code) => {
     if (e.messages.length) {
