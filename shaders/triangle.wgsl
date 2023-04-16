@@ -73,5 +73,4 @@ fn vertex_main(
 @fragment
 fn fragment_main(vtx_out: VertexOut) -> @location(0) vec4f {
   return vtx_out.color;
-  // return vec4f(0.0, 0.0, 1.0, 1.0);
 }
