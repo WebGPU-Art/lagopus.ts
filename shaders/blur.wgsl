@@ -30,7 +30,7 @@ struct Flip {
 // square blocks of size 128 - (filterSize - 1). We compute the number of blocks
 // needed in Javascript and dispatch that amount.
 
-var<workgroup> tile : array<array<vec3<f32>, 128>, 4>;
+var<workgroup> tile : array<array<vec3f, 128>, 4>;
 
 @compute @workgroup_size(64, 1, 1)
 fn main(
@@ -53,7 +53,7 @@ fn main(
       tile[r][4 * LocalInvocationID.x + u32(c)] = textureSampleLevel(
         inputTex,
         samp,
-        (vec2<f32>(loadIndex) + vec2<f32>(0.25, 0.25)) / vec2<f32>(dims),
+        (vec2f(loadIndex) + vec2f(0.25, 0.25)) / vec2f(dims),
         0.0
       ).rgb;
     }

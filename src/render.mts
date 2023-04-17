@@ -153,7 +153,26 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
     fragment: {
       module: shaderModule,
       entryPoint: "fragment_main",
-      targets: [{ format: presentationFormat }],
+      targets: [
+        {
+          format: presentationFormat,
+          // TODO need to learn more details
+          // https://github.com/takahirox/webgpu-trial/blob/master/cube_alpha_blend.html#L273
+          // https://github.com/kdashg/webgpu-js/blob/master/hello-blend.html#L98
+          blend: {
+            color: {
+              srcFactor: "src-alpha",
+              dstFactor: "one-minus-src-alpha",
+              operation: "add",
+            },
+            alpha: {
+              srcFactor: "one",
+              dstFactor: "one-minus-src-alpha",
+              operation: "add",
+            },
+          },
+        },
+      ],
     },
     primitive: {
       topology,
