@@ -1,6 +1,6 @@
 {
   "name": "@triadica/lagopus",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "type": "module",
   "module": "./lib/index.mjs",
   "scripts": {
@@ -8,14 +8,14 @@
     "prepare": "yarn compile"
   },
   "devDependencies": {
-    "@webgpu/types": "^0.1.30",
-    "prettier": "^2.8.7",
-    "typescript": "^5.0.2",
-    "vite": "^4.2.1",
+    "@webgpu/types": "^0.1.31",
+    "prettier": "^2.8.8",
+    "typescript": "^5.0.4",
+    "vite": "^4.3.4",
     "vite-plugin-glsl": "^1.1.2"
   },
   "dependencies": {
-    "@triadica/touch-control": "^0.0.2",
+    "@triadica/touch-control": "^0.0.3",
     "ismobilejs": "^1.1.1"
   }
 }

@@ -1,4 +1,4 @@
-import { Atom } from "./atom.mjs";
+import { Atom } from "@triadica/touch-control";
 import { coneBackScale } from "./config.mjs";
 import { atomMouseHoldingPaths, atomObjectsBuffer, atomObjectsTree, atomProxiedDispatch } from "./global.mjs";
 import isMobile from "ismobilejs";

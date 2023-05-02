@@ -1,7 +1,7 @@
 import { object } from "../alias.mjs";
-import { vAdd, vCross, vDot, vScale, vSub } from "../quaternion.mjs";
+import { vAdd, vCross, vDot, vScale, vSub } from "@triadica/touch-control";
 
-import { Atom } from "../atom.mjs";
+import { Atom } from "@triadica/touch-control";
 import { FnDispatch, V3, V2, LagopusObjectData } from "../primes.mjs";
 
 let atomDragCache = new Atom<{ x: number; y: number }>({

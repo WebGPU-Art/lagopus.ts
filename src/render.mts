@@ -20,7 +20,7 @@ import {
 } from "./global.mjs";
 import { coneBackScale } from "./config.mjs";
 import { atomViewerPosition, atomViewerUpward, newLookatPoint } from "./perspective.mjs";
-import { vNormalize, vCross, vLength } from "./quaternion.mjs";
+import { vNormalize, vCross, vLength } from "@triadica/touch-control";
 import fullscreenWgsl from "../shaders/fullscreen.wgsl";
 import blurWGSL from "../shaders/blur.wgsl";
 import screenFilterWgsl from "../shaders/screen-filter.wgsl";
@@ -193,7 +193,7 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
   const renderPassDescriptor: GPURenderPassDescriptor = {
     colorAttachments: [
       {
-        clearValue: atomClearColor.value ?? { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
+        clearValue: atomClearColor.deref() ?? { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
         loadOp: (needClear ? "clear" : "load") as GPULoadOp,
         storeOp: "store" as GPUStoreOp,
         view: atomBloomEnabled.deref() ? atomCanvasTexture.deref().createView() : context.getCurrentTexture().createView(),
@@ -265,7 +265,7 @@ const createBuffer = (arr: Float32Array | Uint32Array, usage: number) => {
 /** send command buffer to device and render */
 export function paintLagopusTree() {
   let device = atomDevice.deref();
-  atomCommandEncoder.value = device.createCommandEncoder();
+  atomCommandEncoder.reset(device.createCommandEncoder());
 
   atomBufferNeedClear.reset(true);
   let tree = atomLagopusTree.deref();

@@ -1,5 +1,5 @@
 import { LagopusElement, LagopusObjectBuffer } from "./primes.mjs";
-import { Atom } from "./atom.mjs";
+import { Atom } from "@triadica/touch-control";
 
 export var atomDevice: Atom<GPUDevice> = new Atom(null);
 export var atomContext: Atom<GPUCanvasContext> = new Atom(null);

@@ -9,8 +9,7 @@ struct UBO {
   camera_position: vec3f,
 };
 
-@group(0) @binding(0)
-var<uniform> uniforms: UBO;
+@group(0) @binding(0) var<uniform> uniforms: UBO;
 
 // perspective
 

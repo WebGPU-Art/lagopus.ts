@@ -5,7 +5,7 @@ import { compContainer } from "./app/container.mjs";
 import { renderControl, startControlLoop } from "@triadica/touch-control";
 import { onControlEvent } from "./control.mjs";
 import { setupMouseEvents } from "./events.mjs";
-import { Atom } from "./atom.mjs";
+import { Atom } from "@triadica/touch-control";
 import { V3 } from "./primes.mjs";
 import { atomClearColor } from "./global.mjs";
 import { isMobile } from "./config.mjs";
