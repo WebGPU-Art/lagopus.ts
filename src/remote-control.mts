@@ -28,7 +28,6 @@ export let setupRemoteControl = () => {
     let op = JSON.parse(s);
     if (op.action === "control") {
       onControlEvent(op.elapsed, op.states, op.delta);
-      console.log("control");
     }
   };
 };
