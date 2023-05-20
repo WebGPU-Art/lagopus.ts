@@ -1,6 +1,6 @@
 {
   "name": "@triadica/lagopus",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "type": "module",
   "module": "./lib/index.mjs",
   "scripts": {
@@ -15,6 +15,7 @@
     "vite-plugin-glsl": "^1.1.2"
   },
   "dependencies": {
+    "query-string": "^8.1.0",
     "@triadica/touch-control": "^0.0.3",
     "ismobilejs": "^1.1.1"
   }
