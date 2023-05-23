@@ -1,3 +1,4 @@
+import queryString from "query-string";
 import { paintLagopusTree, renderLagopusTree, resetCanvasSize } from "./render.mjs";
 import { enableBloom, initializeCanvasTextures, initializeContext } from "./initialize.js";
 
@@ -9,6 +10,7 @@ import { Atom } from "@triadica/touch-control";
 import { V3 } from "./primes.mjs";
 import { atomClearColor } from "./global.mjs";
 import { isMobile } from "./config.mjs";
+import { setupRemoteControl } from "./remote-control.mjs";
 
 let store = new Atom({
   position: [180, 80, 80] as V3,
@@ -57,6 +59,12 @@ window.onload = async () => {
     }
   };
   setupMouseEvents(canvas);
+
+  const parsed = queryString.parse(location.search);
+
+  if (parsed["remote-control"]) {
+    setupRemoteControl();
+  }
 };
 
 declare global {
