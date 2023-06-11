@@ -9,6 +9,8 @@ export let atomViewerPosition = new Atom<V3>([0, 0, 600]);
 
 export let atomViewerUpward = new Atom<V3>([0, 1, 0]);
 
+export let atomViewerScale = new Atom<number>(1);
+
 export let moveViewerBy = (x0: number, y0: number, z0: number) => {
   let dv = toViewerAxis(x0, y0, z0);
   let position = atomViewerPosition.deref();
@@ -43,6 +45,13 @@ export let spinGlanceBy = (v: number) => {
     let upward = atomViewerUpward.deref();
     let rightward = vCross(upward, forward);
     atomViewerUpward.reset(vAdd(vScale(upward, Math.cos(da)), vScale(rightward, Math.sin(da))));
+  }
+};
+
+export let changeScaleBy = (v: number) => {
+  let next = atomViewerScale.deref() + atomViewerScale.deref() * v;
+  if (next >= 0.1) {
+    atomViewerScale.reset(next);
   }
 };
 
