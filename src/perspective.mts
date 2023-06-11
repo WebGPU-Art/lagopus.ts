@@ -73,8 +73,9 @@ export let transform3d = (p0: V3): V3 => {
   let yp = vDot(point, upward) * screenScale;
   let xp = -vDot(point, rightward) * screenScale;
   let zp = r;
+  let scale = atomViewerScale.deref();
 
-  return [xp, yp, zp];
+  return [xp * scale, yp * scale, zp * scale];
 };
 
 let vSquare = (v: V3): number => {

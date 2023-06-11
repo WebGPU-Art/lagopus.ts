@@ -33,7 +33,7 @@ function renderApp() {
 
 window.onload = async () => {
   if (!isMobile) {
-    enableBloom();
+    // enableBloom();
   }
 
   await initializeContext();
