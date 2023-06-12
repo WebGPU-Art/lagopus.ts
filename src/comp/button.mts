@@ -10,7 +10,7 @@ let atomDragCache = new Atom<{ x: number; y: number }>({
 });
 
 import triangleWgsl from "../../shaders/triangle.wgsl";
-import { atomViewerForward, atomViewerPosition, atomViewerUpward, newLookatPoint } from "../perspective.mjs";
+import { atomViewerForward, atomViewerPosition, atomViewerUpward, newLookatPoint, atomViewerScale } from "../perspective.mjs";
 import { coneBackScale } from "../config.mjs";
 import { wLog } from "../global.mjs";
 
@@ -110,7 +110,8 @@ export let compDragPoint = (
       (Math.pow(lookDistance[0], 2) + Math.pow(lookDistance[1], 2) + Math.pow(lookDistance[2], 2));
     let scaleRadio = window.innerWidth * 0.002 * 0.5;
     let screenScale = (r + s) / (s + 1);
-    onMove(vAdd(position, vScale(vAdd(vScale(rightward, dx), vScale(upward, dy)), screenScale / scaleRadio)), d);
+    let scale = 1 / atomViewerScale.deref();
+    onMove(vAdd(position, vScale(vAdd(vScale(rightward, dx), vScale(upward, dy)), (screenScale / scaleRadio) * scale)), d);
   };
   return object({
     topology: "triangle-list",

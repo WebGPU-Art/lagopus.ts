@@ -19,7 +19,7 @@ import {
   atomBloomEnabled,
 } from "./global.mjs";
 import { coneBackScale } from "./config.mjs";
-import { atomViewerPosition, atomViewerUpward, newLookatPoint } from "./perspective.mjs";
+import { atomViewerPosition, atomViewerScale, atomViewerUpward, newLookatPoint } from "./perspective.mjs";
 import { vNormalize, vCross, vLength } from "@triadica/touch-control";
 import fullscreenWgsl from "../shaders/fullscreen.wgsl";
 import blurWGSL from "../shaders/blur.wgsl";
@@ -101,7 +101,7 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
     window.innerHeight / window.innerWidth,
     vLength(lookAt),
     // alignment
-    0,
+    atomViewerScale.deref(),
     // lookpoint
     ...forward,
     // alignment

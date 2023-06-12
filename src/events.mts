@@ -3,7 +3,7 @@ import { coneBackScale } from "./config.mjs";
 import { atomMouseHoldingPaths, atomObjectsBuffer, atomObjectsTree, atomProxiedDispatch } from "./global.mjs";
 import isMobile from "ismobilejs";
 import { cDistance } from "./math.mjs";
-import { transform3d } from "./perspective.mjs";
+import { atomViewerScale, transform3d } from "./perspective.mjs";
 import { LagopusElement, LagopusObjectData } from "./primes.mjs";
 
 export let traverseTree = (tree: LagopusElement, coord: number[], cb: (obj: LagopusObjectData, coord: number[]) => void) => {
@@ -31,6 +31,7 @@ let handleScreenClick = (event: MouseEvent) => {
   let scaleRadio = 0.002 * 0.5 * window.innerWidth;
   let touchDeviation = isMobile ? 16 : 4;
   let hitTargetsBuffer = new Atom([]);
+  let scale = atomViewerScale.deref();
   traverseTree(atomObjectsTree.deref(), [], (obj: LagopusObjectData, coord: number[]) => {
     if (obj.hitRegion != null) {
       let region = obj.hitRegion;
@@ -43,7 +44,7 @@ let handleScreenClick = (event: MouseEvent) => {
         let r = mappedPosition[2];
         let mappedRadius = scaleRadio * region.radius * ((coneBackScale + 1) / (r + coneBackScale));
         let distance = cDistance([screenPosition[0], screenPosition[1]], [x, y]);
-        if (distance <= touchDeviation + mappedRadius && r > -0.8 * coneBackScale) {
+        if (distance <= (touchDeviation + mappedRadius) * scale && r > -0.8 * coneBackScale) {
           hitTargetsBuffer.deref().push([r, onHit, null]);
         }
       }
@@ -62,6 +63,7 @@ let handleScreenMousedown = (event: MouseEvent) => {
   let scaleRadio = 0.002 * 0.5 * window.innerWidth;
   let touchDeviation = isMobile ? 16 : 4;
   let hitTargetsBuffer = new Atom([]);
+  let scale = atomViewerScale.deref();
   traverseTree(atomObjectsTree.deref(), [], (obj: LagopusObjectData, coord: number[]) => {
     if (obj.hitRegion != null) {
       let region = obj.hitRegion;
@@ -74,7 +76,7 @@ let handleScreenMousedown = (event: MouseEvent) => {
         let r = mappedPosition[2];
         let mappedRadius = scaleRadio * region.radius * ((coneBackScale + 1) / (r + coneBackScale));
         let distance = cDistance([screenPosition[0], screenPosition[1]], [x, y]);
-        if (distance <= touchDeviation + mappedRadius && r > -0.8 * coneBackScale) {
+        if (distance <= (touchDeviation + mappedRadius) * scale && r > -0.8 * coneBackScale) {
           hitTargetsBuffer.deref().push([r, onMousedown, coord]);
         }
       }

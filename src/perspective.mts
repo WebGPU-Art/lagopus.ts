@@ -9,6 +9,8 @@ export let atomViewerPosition = new Atom<V3>([0, 0, 600]);
 
 export let atomViewerUpward = new Atom<V3>([0, 1, 0]);
 
+export let atomViewerScale = new Atom<number>(1);
+
 export let moveViewerBy = (x0: number, y0: number, z0: number) => {
   let dv = toViewerAxis(x0, y0, z0);
   let position = atomViewerPosition.deref();
@@ -46,6 +48,13 @@ export let spinGlanceBy = (v: number) => {
   }
 };
 
+export let changeScaleBy = (v: number) => {
+  let next = atomViewerScale.deref() + atomViewerScale.deref() * v;
+  if (next >= 0.1) {
+    atomViewerScale.reset(next);
+  }
+};
+
 export let toViewerAxis = (x: number, y: number, z: number): V3 => {
   let forward = atomViewerForward.deref();
   let upward = atomViewerUpward.deref();
@@ -64,8 +73,9 @@ export let transform3d = (p0: V3): V3 => {
   let yp = vDot(point, upward) * screenScale;
   let xp = -vDot(point, rightward) * screenScale;
   let zp = r;
+  let scale = atomViewerScale.deref();
 
-  return [xp, yp, zp];
+  return [xp * scale, yp * scale, zp * scale];
 };
 
 let vSquare = (v: V3): number => {
