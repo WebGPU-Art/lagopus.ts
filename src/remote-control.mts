@@ -3,7 +3,7 @@ import { onControlEvent } from "./control.mjs";
 
 let connected = false;
 
-export let setupRemoteControl = () => {
+export let setupRemoteControl = (handler?: (action: { action: string }) => void) => {
   const parsed = queryString.parse(location.search);
   let host = (parsed["control-host"] as string) || "localhost";
   let port = parseInt((parsed["control-port"] as string) || "6200");
@@ -28,6 +28,8 @@ export let setupRemoteControl = () => {
     let op = JSON.parse(s);
     if (op.action === "control") {
       onControlEvent(op.elapsed, op.states, op.delta);
+    } else {
+      handler?.(op);
     }
   };
 };
