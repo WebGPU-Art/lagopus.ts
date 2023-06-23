@@ -12,9 +12,10 @@ export let atomViewerUpward = new Atom<V3>([0, 1, 0]);
 export let atomViewerScale = new Atom<number>(1);
 
 export let moveViewerBy = (x0: number, y0: number, z0: number) => {
+  let moveRatio = 1 / atomViewerScale.deref();
   let dv = toViewerAxis(x0, y0, z0);
   let position = atomViewerPosition.deref();
-  atomViewerPosition.reset(vAdd(position, dv));
+  atomViewerPosition.reset(vAdd(position, vScale(dv, moveRatio)));
 };
 
 export let newLookatPoint = (): V3 => {
@@ -22,15 +23,16 @@ export let newLookatPoint = (): V3 => {
 };
 
 export let rotateGlanceBy = (x: number, y: number) => {
+  let moveRatio = 1 / atomViewerScale.deref();
   if (x !== 0) {
-    let da = x * 0.1;
+    let da = x * 0.1 * moveRatio;
     let forward = atomViewerForward.deref();
     let upward = atomViewerUpward.deref();
     let rightward = vCross(upward, forward);
     atomViewerForward.reset(vAdd(vScale(forward, Math.cos(da)), vScale(rightward, Math.sin(da))));
   }
   if (y !== 0) {
-    let da = y * 0.1;
+    let da = y * 0.1 * moveRatio;
     let forward = atomViewerForward.deref();
     let upward = atomViewerUpward.deref();
     atomViewerForward.reset(vAdd(vScale(forward, Math.cos(da)), vScale(upward, Math.sin(da))));
@@ -40,7 +42,8 @@ export let rotateGlanceBy = (x: number, y: number) => {
 
 export let spinGlanceBy = (v: number) => {
   if (v !== 0) {
-    let da = v * 0.1;
+    let moveRatio = 1 / atomViewerScale.deref();
+    let da = v * 0.1 * moveRatio;
     let forward = atomViewerForward.deref();
     let upward = atomViewerUpward.deref();
     let rightward = vCross(upward, forward);
