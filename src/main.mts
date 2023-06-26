@@ -63,7 +63,9 @@ window.onload = async () => {
   const parsed = queryString.parse(location.search);
 
   if (parsed["remote-control"]) {
-    setupRemoteControl();
+    setupRemoteControl((action) => {
+      console.log("Action", action);
+    });
   }
 };
 

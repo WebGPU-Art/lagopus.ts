@@ -82,3 +82,19 @@ export function newBufferFormatLength(format: GPUVertexFormat, size: number): Fl
     throw new Error(`unsupported format ${format}`);
   }
 }
+
+export function newBufferFormatArray(format: GPUVertexFormat, data: number[]): Float32Array | Uint32Array {
+  if (format === "float32") {
+    return Float32Array.from(data);
+  } else if (format === "float32x2") {
+    return Float32Array.from(data);
+  } else if (format === "float32x3") {
+    return Float32Array.from(data);
+  } else if (format === "float32x4") {
+    return Float32Array.from(data);
+  } else if (format === "uint32") {
+    return Uint32Array.from(data);
+  } else {
+    throw new Error(`unsupported format ${format}`);
+  }
+}

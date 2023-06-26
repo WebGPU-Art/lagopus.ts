@@ -12,10 +12,10 @@ export let onControlEvent = (elapsed: number, states: ControlStates, delta: Cont
   let rightA = states.rightA || states.shift;
   let rightB = states.rightB;
   let leftB = states.leftB;
-  if (lMove[1] !== 0) {
+  if (lMove[1] !== 0 && !rightB) {
     moveViewerBy(0, 0, -2 * elapsed * lMove[1]);
   }
-  if (lMove[0] !== 0) {
+  if (lMove[0] !== 0 && !rightA && !rightB) {
     rotateGlanceBy(-0.05 * elapsed * lMove[0], 0);
   }
   if (!rightA && !rightB && !isZero(rMove)) {
