@@ -24,6 +24,7 @@ import { vNormalize, vCross, vLength } from "@triadica/touch-control";
 import fullscreenWgsl from "../shaders/fullscreen.wgsl";
 import blurWGSL from "../shaders/blur.wgsl";
 import screenFilterWgsl from "../shaders/screen-filter.wgsl";
+import { clearCanvas } from "./clear";
 
 /** prepare vertex buffer from object */
 export let createRenderer = (
@@ -271,10 +272,11 @@ export function paintLagopusTree() {
   let tree = atomLagopusTree.deref();
   collectBuffers(tree);
 
-  if (atomBloomEnabled.deref()) {
+  if (atomBufferNeedClear.deref()) {
+    clearCanvas();
+  } else if (atomBloomEnabled.deref()) {
     postRendering();
   }
-
   // load shared device
   let commandEncoder = atomCommandEncoder.deref();
   device.queue.submit([commandEncoder.finish()]);
