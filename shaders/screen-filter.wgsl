@@ -40,10 +40,10 @@ fn frag_main(@location(0) fragUV : vec2f) -> @location(0) vec4f {
   let a = textureSample(myTexture, mySampler, fragUV);
   let s = color_strength(a);
   if (s > 0.6) {
-    return a * s * (s - 0.6) * 4;
+    return a * s * (s - 0.6) * 4f;
   } else {
     // return vec4(0.6, 0.6, 1.0, 1.0);
-    return vec4(0, 0, 0.0, 1.0);
+    return vec4(0f, 0f, 0.0, 1.0);
   }
 }
 

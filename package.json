@@ -8,15 +8,15 @@
     "prepare": "yarn compile"
   },
   "devDependencies": {
-    "@webgpu/types": "^0.1.31",
-    "prettier": "^2.8.8",
-    "typescript": "^5.0.4",
-    "vite": "^4.3.4",
+    "@webgpu/types": "^0.1.37",
+    "prettier": "^3.0.3",
+    "typescript": "^5.2.2",
+    "vite": "^4.4.9",
     "vite-plugin-glsl": "^1.1.2"
   },
   "dependencies": {
-    "query-string": "^8.1.0",
     "@triadica/touch-control": "^0.0.3",
-    "ismobilejs": "^1.1.1"
+    "ismobilejs": "^1.1.1",
+    "query-string": "^8.1.0"
   }
 }
