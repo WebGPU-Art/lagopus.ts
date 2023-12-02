@@ -2,8 +2,8 @@
 //! https://github.com/webgpu/webgpu-samples/blob/main/src/sample/imageBlur/blur.wgsl
 
 struct Params {
-  filterDim : i32,
-  blockDim : u32,
+  filterDim: i32,
+  blockDim: u32,
 }
 
 @group(0) @binding(0) var samp: sampler;
@@ -12,7 +12,7 @@ struct Params {
 @group(1) @binding(2) var outputTex: texture_storage_2d<rgba8unorm, write>;
 
 struct Flip {
-  value : u32,
+  value: u32,
 }
 @group(1) @binding(3) var<uniform> flip : Flip;
 
@@ -34,23 +34,21 @@ var<workgroup> tile : array<array<vec3f, 128>, 4>;
 
 @compute @workgroup_size(64, 1, 1)
 fn main(
-  @builtin(workgroup_id) WorkGroupID : vec3<u32>,
-  @builtin(local_invocation_id) LocalInvocationID : vec3<u32>
+  @builtin(workgroup_id) WorkGroupID: vec3<u32>,
+  @builtin(local_invocation_id) LocalInvocationID: vec3<u32>
 ) {
   let filterOffset = (params.filterDim - 1) / 2;
   let dims = vec2<i32>(textureDimensions(inputTex, 0));
-  let baseIndex = vec2<i32>(WorkGroupID.xy * vec2(params.blockDim, 4) +
-                            LocalInvocationID.xy * vec2(4, 1))
-                  - vec2(filterOffset, 0);
+  let baseIndex = vec2<i32>(WorkGroupID.xy * vec2(params.blockDim, 4u) + LocalInvocationID.xy * vec2(4u, 1u)) - vec2(filterOffset, 0);
 
   for (var r = 0; r < 4; r++) {
     for (var c = 0; c < 4; c++) {
       var loadIndex = baseIndex + vec2(c, r);
-      if (flip.value != 0u) {
+      if flip.value != 0u {
         loadIndex = loadIndex.yx;
       }
 
-      tile[r][4 * LocalInvocationID.x + u32(c)] = textureSampleLevel(
+      tile[r][4u * LocalInvocationID.x + u32(c)] = textureSampleLevel(
         inputTex,
         samp,
         (vec2f(loadIndex) + vec2f(0.25, 0.25)) / vec2f(dims),
@@ -64,14 +62,12 @@ fn main(
   for (var r = 0; r < 4; r++) {
     for (var c = 0; c < 4; c++) {
       var writeIndex = baseIndex + vec2(c, r);
-      if (flip.value != 0) {
+      if flip.value != 0u {
         writeIndex = writeIndex.yx;
       }
 
-      let center = i32(4 * LocalInvocationID.x) + c;
-      if (center >= filterOffset &&
-          center < 128 - filterOffset &&
-          all(writeIndex < dims)) {
+      let center = i32(4u * LocalInvocationID.x) + c;
+      if center >= filterOffset && center < 128 - filterOffset && all(writeIndex < dims) {
         var acc = vec3(0.0, 0.0, 0.0);
         for (var f = 0; f < params.filterDim; f++) {
           var i = center + f - filterOffset;
