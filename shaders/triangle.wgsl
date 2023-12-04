@@ -52,8 +52,8 @@ fn transform_perspective(p: vec3f) -> PointResult {
 // main
 
 struct VertexOut {
-  @builtin(position) position : vec4f,
-  @location(0) color : vec4f,
+  @builtin(position) position: vec4f,
+  @location(0) color: vec4f,
 };
 
 @vertex
@@ -64,7 +64,7 @@ fn vertex_main(
   var output: VertexOut;
   let p = transform_perspective(position.xyz).pointPosition;
   let scale: f32 = 0.002;
-  output.position = vec4(p[0]*scale, p[1]*scale, p[2]*scale, 1.0);
+  output.position = vec4(p[0] * scale, p[1] * scale, p[2] * scale, 1.0);
   // output.position = position;
   output.color = color;
   return output;
