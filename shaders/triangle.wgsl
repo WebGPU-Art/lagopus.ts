@@ -10,7 +10,12 @@ struct UBO {
   camera_position: vec3f,
 };
 
+struct Params {
+  _pad: f32,
+}
+
 @group(0) @binding(0) var<uniform> uniforms: UBO;
+@group(0) @binding(1) var<uniform> params: Params;
 
 // perspective
 
