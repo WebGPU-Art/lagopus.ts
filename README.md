@@ -51,8 +51,14 @@ struct UBO {
   camera_position: vec3f,
 };
 
-@group(0) @binding(0)
-var<uniform> uniforms: UBO;
+@group(0) @binding(0) var<uniform> uniforms: UBO;
+
+// your custom params
+struct Params {
+  _pad: f32
+}
+
+@group(0) @binding(1) var<uniform> params Params;
 
 // perspective
 
@@ -119,7 +125,7 @@ fn fragment_main(vtx_out: VertexOut) -> @location(0) vec4f {
 }
 ```
 
-there's also support for `addUniform`, [whose layout is quite tricky](https://www.w3.org/TR/WGSL/#structure-member-layout).
+there's also support for `params`, [whose layout is quite tricky](https://www.w3.org/TR/WGSL/#structure-member-layout).
 
 ### License
 
