@@ -10,13 +10,15 @@ struct UBO {
 
   camera_position: vec3f,
   _pad: u32, // https://www.w3.org/TR/WGSL/#structure-member-layout
-
-  // custom data
-  time: f32,
 };
 
-@group(0) @binding(0)
-var<uniform> uniforms: UBO;
+struct Params {
+  // custom data
+  time: f32,
+}
+
+@group(0) @binding(0) var<uniform> uniforms: UBO;
+@group(0) @binding(1) var<uniform> params: Params;
 
 // perspective
 
@@ -71,7 +73,7 @@ fn vertex_main(
   var output: VertexOut;
   output.position = vec4((p * 0.002).xyz, 1.0);
   // output.position = position;
-  output.time = fract(uniforms.time);
+  output.time = fract(params.time);
   // output.time = 0.5;
   return output;
 }

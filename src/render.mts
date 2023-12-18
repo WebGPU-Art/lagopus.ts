@@ -35,7 +35,7 @@ export let createRenderer = (
   vertices: (Float32Array | Uint32Array)[],
   hitRegion: LagopusHitRegion,
   indices: Uint32Array,
-  addUniform: () => number[]
+  getParams: () => number[]
 ): LagopusObjectData => {
   // load shared device
   let device = atomDevice.deref();
@@ -77,7 +77,7 @@ export let createRenderer = (
     length: verticesLength,
     hitRegion: hitRegion,
     indices: indecesBuffer,
-    addUniform: addUniform,
+    getParams,
   };
 };
 
@@ -116,27 +116,30 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
     0,
     // cameraPosition
     ...atomViewerPosition.deref(),
-    0,
     // alignment
-    ...(info.addUniform?.() || []),
+    0,
   ]);
 
-  let uniformBuffer = createBuffer(uniformData, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST);
-  // console.log(info.addUniform?.(), uniformData.length, uniformBuffer);
+  const customParams = new Float32Array([...(info.getParams?.() || [0])]);
 
+  let uniformBuffer = createBuffer(uniformData, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST);
+  let customParamsBuffer = createBuffer(customParams, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST);
+  // console.log(info.getParams?.(), uniformData.length, uniformBuffer);
+
+  let emptyBuffer = {}; // TODO don't know why, but fixes, https://programmer.ink/think/several-best-practices-of-webgpu.html
   let uniformBindGroupLayout = device.createBindGroupLayout({
     entries: [
-      {
-        binding: 0,
-        visibility: GPUShaderStage.VERTEX,
-        buffer: {}, // TODO don't know why, but fixes, https://programmer.ink/think/several-best-practices-of-webgpu.html
-      },
+      { binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: emptyBuffer },
+      { binding: 1, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: emptyBuffer },
     ],
   });
 
   let uniformBindGroup: GPUBindGroup = device.createBindGroup({
     layout: uniformBindGroupLayout,
-    entries: [{ binding: 0, resource: { buffer: uniformBuffer } }],
+    entries: [
+      { binding: 0, resource: { buffer: uniformBuffer } },
+      { binding: 1, resource: { buffer: customParamsBuffer } },
+    ],
   });
 
   const pipelineLayoutDesc = { bindGroupLayouts: [uniformBindGroupLayout] };

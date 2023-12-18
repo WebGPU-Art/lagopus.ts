@@ -73,7 +73,7 @@ export let compContainer = (store: { position: V3 }): LagopusElement => {
       topology: "triangle-list",
       attrsList: [{ field: "position", format: "float32x4" }],
       data: [{ position: [140.0, 0.0, 30, 1] }, { position: [120.0, 20.0, 30, 1] }, { position: [140.0, 40.0, 30, 1] }],
-      addUniform: () => {
+      getParams: () => {
         return [(Date.now() / 400) % 1, 0, 0, 0];
       },
     }),
