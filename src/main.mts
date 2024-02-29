@@ -4,12 +4,12 @@ import { enableBloom, initializeCanvasTextures, initializeContext } from "./init
 
 import { compContainer } from "./app/container.mjs";
 import { renderControl, startControlLoop } from "@triadica/touch-control";
-import { onControlEvent } from "./control.mjs";
+import { loadGamepadControl, onControlEvent } from "./control.mjs";
 import { setupMouseEvents } from "./events.mjs";
 import { Atom } from "@triadica/touch-control";
 import { V3 } from "./primes.mjs";
 import { atomClearColor } from "./global.mjs";
-import { isMobile } from "./config.mjs";
+import { isMobile, parsedQuery } from "./config.mjs";
 import { setupRemoteControl } from "./remote-control.mjs";
 
 let store = new Atom({
@@ -60,13 +60,14 @@ window.onload = async () => {
   };
   setupMouseEvents(canvas);
 
-  const parsed = queryString.parse(location.search);
-
-  if (parsed["remote-control"]) {
+  if (parsedQuery["remote-control"]) {
     setupRemoteControl((action) => {
       console.log("Action", action);
     });
   }
+
+  loadGamepadControl();
+  paintLagopusTree();
 };
 
 declare global {

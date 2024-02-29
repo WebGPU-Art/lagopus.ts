@@ -1,12 +1,11 @@
-import queryString from "query-string";
 import { onControlEvent } from "./control.mjs";
+import { parsedQuery } from "./config.mjs";
 
 let connected = false;
 
 export let setupRemoteControl = (handler?: (action: { action: string }) => void) => {
-  const parsed = queryString.parse(location.search);
-  let host = (parsed["control-host"] as string) || "localhost";
-  let port = parseInt((parsed["control-port"] as string) || "6200");
+  let host = (parsedQuery["control-host"] as string) || "localhost";
+  let port = parseInt((parsedQuery["control-port"] as string) || "6200");
   let ws = new WebSocket(`ws://${host}:${port}`);
 
   ws.onopen = (event) => {
