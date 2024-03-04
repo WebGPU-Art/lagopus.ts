@@ -6,6 +6,6 @@ export { initializeContext, enableBloom, initializeCanvasTextures } from "./init
 
 export { compButton, compDragPoint, compSlider } from "./comp/button.mjs";
 
-export { onControlEvent, registerShaderResult } from "./control.mjs";
+export { onControlEvent, registerShaderResult, loadGamepadControl } from "./control.mjs";
 
 export { setupMouseEvents } from "./events.mjs";
