@@ -156,7 +156,7 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
       {
         binding: 0,
         visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
-        type: "comparison-sampler",
+        sampler: { type: "filtering" },
       } as GPUBindGroupLayoutEntry,
     ].concat(
       info.textures.map((texture, idx) => {
@@ -169,8 +169,6 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
     );
     let layout = device.createBindGroupLayout({ label: info.label, entries });
     textureLayouts.push(layout);
-
-    debugger;
 
     const sampler = device.createSampler({
       label: info.label,
@@ -279,7 +277,6 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
 
   passEncoder.setBindGroup(0, uniformBindGroup);
   if (textureBindGroup) {
-    debugger;
     // occupies 1 for texture
     passEncoder.setBindGroup(1, textureBindGroup);
   }

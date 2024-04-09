@@ -117,11 +117,11 @@ export let compContainer = (store: { position: V3 }, resources: Record<string, G
       textures: [resources["tiye"]],
       data: [
         { position: [120.0, 80.0, 30, 1], color: [1, 0, 0, 1] },
-        { position: [128.0, 80.0, 30, 1], color: [1, 0, 0, 1] },
-        { position: [120.0, 88.0, 38, 1], color: [1, 0, 0, 1] },
-        { position: [128.0, 80.0, 30, 1], color: [1, 0, 0, 1] },
-        { position: [120.0, 88.0, 38, 1], color: [1, 0, 0, 1] },
-        { position: [128.0, 88.0, 30, 1], color: [1, 0, 0, 1] },
+        { position: [160.0, 80.0, 30, 1], color: [1, 0, 0, 1] },
+        { position: [120.0, 120.0, 70, 1], color: [1, 0, 0, 1] },
+        { position: [160.0, 80.0, 30, 1], color: [1, 0, 0, 1] },
+        { position: [120.0, 120.0, 70, 1], color: [1, 0, 0, 1] },
+        { position: [160.0, 120.0, 30, 1], color: [1, 0, 0, 1] },
       ],
     })
   );

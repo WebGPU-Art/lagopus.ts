@@ -66,7 +66,7 @@ struct VertexOut {
 
 @vertex
 fn vertex_main(
-  @location(0) position: vec4f,
+  @builtin(vertex_index) idx: u32, @location(0) position: vec4f,
   @location(1) color: vec4f
 ) -> VertexOut {
   var output: VertexOut;
@@ -74,7 +74,17 @@ fn vertex_main(
   let scale: f32 = 0.002;
   output.position = vec4(p[0] * scale, p[1] * scale, p[2] * scale, 1.0);
   // output.position = position;
-  output.uv = vec2(0.0, 0.0);
+
+  const uv = array<vec2f, 6>(
+    vec2(1.0, 0.0),
+    vec2(1.0, 1.0),
+    vec2(0.0, 1.0),
+    vec2(1.0, 0.0),
+    vec2(0.0, 1.0),
+    vec2(0.0, 0.0),
+  );
+
+  output.uv = uv[idx];
   return output;
 }
 
