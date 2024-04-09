@@ -1,11 +1,12 @@
 import triangleWgsl from "../../shaders/triangle.wgsl";
+import imageWgsl from "../../shaders/image.wgsl";
 import blinkWgsl from "../../shaders/blink.wgsl";
 
 import { flattenData, group, object } from "../alias.mjs";
 import { LagopusElement, V3 } from "../primes.mjs";
 import { compButton, compSlider, compDragPoint } from "../comp/button.mjs";
 
-export let compContainer = (store: { position: V3 }): LagopusElement => {
+export let compContainer = (store: { position: V3 }, resources: Record<string, GPUTexture>): LagopusElement => {
   return group(
     null,
     object({
@@ -103,6 +104,25 @@ export let compContainer = (store: { position: V3 }): LagopusElement => {
       (newPos, d) => {
         d("drag", newPos);
       }
-    )
+    ),
+
+    object({
+      label: "image",
+      shader: imageWgsl,
+      topology: "triangle-list",
+      attrsList: [
+        { field: "position", format: "float32x4" },
+        { field: "color", format: "float32x4" },
+      ],
+      textures: [resources["tiye"]],
+      data: [
+        { position: [120.0, 80.0, 30, 1], color: [1, 0, 0, 1] },
+        { position: [128.0, 80.0, 30, 1], color: [1, 0, 0, 1] },
+        { position: [120.0, 88.0, 38, 1], color: [1, 0, 0, 1] },
+        { position: [128.0, 80.0, 30, 1], color: [1, 0, 0, 1] },
+        { position: [120.0, 88.0, 38, 1], color: [1, 0, 0, 1] },
+        { position: [128.0, 88.0, 30, 1], color: [1, 0, 0, 1] },
+      ],
+    })
   );
 };
