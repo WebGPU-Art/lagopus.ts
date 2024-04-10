@@ -152,7 +152,7 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
 
   let renderLayout = device.createPipelineLayout({
     label: info.label,
-    bindGroupLayouts: [uniformBindGroupLayout, ...texturesInfo.layouts],
+    bindGroupLayouts: [uniformBindGroupLayout, texturesInfo.layout].filter(Boolean),
   });
 
   // ~~ CREATE RENDER PIPELINE ~~
@@ -282,9 +282,10 @@ const createBuffer = (arr: Float32Array | Uint32Array, usage: number) => {
   return buffer;
 };
 
-export function prepareTextures(device: GPUDevice, textures: GPUTexture[], label: string) {
-  let textureLayouts: GPUBindGroupLayout[] = [];
+/** based on code https://webgpu.github.io/webgpu-samples/?sample=imageBlur#fullscreenTexturedQuad.wgsl */
+function prepareTextures(device: GPUDevice, textures: GPUTexture[], label: string) {
   let textureBindGroup: GPUBindGroup = undefined;
+  let layout: GPUBindGroupLayout = undefined;
 
   if (textures && textures[0]) {
     let entries: GPUBindGroupLayoutEntry[] = [
@@ -302,8 +303,7 @@ export function prepareTextures(device: GPUDevice, textures: GPUTexture[], label
         };
       })
     );
-    let layout = device.createBindGroupLayout({ label: label, entries });
-    textureLayouts.push(layout);
+    layout = device.createBindGroupLayout({ label: label, entries });
 
     const sampler = device.createSampler({
       label: label,
@@ -331,7 +331,7 @@ export function prepareTextures(device: GPUDevice, textures: GPUTexture[], label
   }
 
   return {
-    layouts: textureLayouts,
+    layout,
     bindGroup: textureBindGroup,
   };
 }

@@ -42,6 +42,7 @@ export let compSlider = (
     onMove([dx, dy], d);
   };
   return object({
+    label: "slider",
     topology: "triangle-list",
     shader: triangleWgsl,
     hitRegion: {
@@ -114,6 +115,7 @@ export let compDragPoint = (
     onMove(vAdd(position, vScale(vAdd(vScale(rightward, dx), vScale(upward, dy)), (screenScale / scaleRadio) * scale)), d);
   };
   return object({
+    label: "drag-point",
     topology: "triangle-list",
     shader: triangleWgsl,
     hitRegion: {
@@ -170,6 +172,7 @@ export let compButton = (
   ];
   let indices = [0, 5, 2, 1, 4, 2, 1, 5, 3, 0, 4, 3];
   return object({
+    label: "button",
     topology: "triangle-list",
     shader: triangleWgsl,
     hitRegion: {

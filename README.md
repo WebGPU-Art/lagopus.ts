@@ -21,6 +21,7 @@ object({
     { field: "position", format: "float32x4" },
     { field: "color", format: "float32x4" },
   ],
+  // vertex params
   data: [
     { position: [120.0, 120.0, 30, 1], color: [1, 0, 0, 1] },
     { position: [128.0, 120.0, 30, 1], color: [1, 0, 0, 1] },
@@ -34,6 +35,12 @@ object({
       d("hit", { x: e.clientX, y: e.clientY });
     },
   },
+  // in @group(0) for uniforms
+  getParams: () => {
+    return [(Date.now() / 400) % 1, 0, 0, 0];
+  },
+  // in @group(1) for textures
+  textures: [],
 });
 ```
 
@@ -125,7 +132,7 @@ fn fragment_main(vtx_out: VertexOut) -> @location(0) vec4f {
 }
 ```
 
-there's also support for `params`, [whose layout is quite tricky](https://www.w3.org/TR/WGSL/#structure-member-layout).
+Uniforms is passed from `params`, [whose layout is quite tricky](https://www.w3.org/TR/WGSL/#structure-member-layout).
 
 ### License
 
