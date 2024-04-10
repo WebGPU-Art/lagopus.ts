@@ -148,56 +148,11 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
     ],
   });
 
-  let textureLayouts: GPUBindGroupLayout[] = [];
-  let textureBindGroup: GPUBindGroup = undefined;
-
-  if (info.textures && info.textures[0]) {
-    let entries: GPUBindGroupLayoutEntry[] = [
-      {
-        binding: 0,
-        visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
-        sampler: { type: "filtering" },
-      } as GPUBindGroupLayoutEntry,
-    ].concat(
-      info.textures.map((texture, idx) => {
-        return {
-          binding: idx + 1,
-          visibility: GPUShaderStage.FRAGMENT,
-          texture: { sampleType: "float", viewDimension: "2d", multisampled: false },
-        };
-      })
-    );
-    let layout = device.createBindGroupLayout({ label: info.label, entries });
-    textureLayouts.push(layout);
-
-    const sampler = device.createSampler({
-      label: info.label,
-      magFilter: "linear",
-      minFilter: "linear",
-    });
-
-    textureBindGroup = device.createBindGroup({
-      label: info.label,
-      layout,
-      entries: [
-        {
-          binding: 0,
-          resource: sampler,
-        } as GPUBindGroupEntry,
-      ].concat(
-        info.textures.map((texture, idx) => {
-          return {
-            binding: idx + 1,
-            resource: texture.createView(),
-          };
-        })
-      ),
-    });
-  }
+  let texturesInfo = prepareTextures(device, info.textures, info.label);
 
   let renderLayout = device.createPipelineLayout({
     label: info.label,
-    bindGroupLayouts: [uniformBindGroupLayout, ...textureLayouts],
+    bindGroupLayouts: [uniformBindGroupLayout, ...texturesInfo.layouts],
   });
 
   // ~~ CREATE RENDER PIPELINE ~~
@@ -276,9 +231,9 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
   const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
 
   passEncoder.setBindGroup(0, uniformBindGroup);
-  if (textureBindGroup) {
+  if (texturesInfo.bindGroup) {
     // occupies 1 for texture
-    passEncoder.setBindGroup(1, textureBindGroup);
+    passEncoder.setBindGroup(1, texturesInfo.bindGroup);
   }
 
   passEncoder.setPipeline(pipeline);
@@ -326,6 +281,60 @@ const createBuffer = (arr: Float32Array | Uint32Array, usage: number) => {
   buffer.unmap();
   return buffer;
 };
+
+export function prepareTextures(device: GPUDevice, textures: GPUTexture[], label: string) {
+  let textureLayouts: GPUBindGroupLayout[] = [];
+  let textureBindGroup: GPUBindGroup = undefined;
+
+  if (textures && textures[0]) {
+    let entries: GPUBindGroupLayoutEntry[] = [
+      {
+        binding: 0,
+        visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+        sampler: { type: "filtering" },
+      } as GPUBindGroupLayoutEntry,
+    ].concat(
+      textures.map((texture, idx) => {
+        return {
+          binding: idx + 1,
+          visibility: GPUShaderStage.FRAGMENT,
+          texture: { sampleType: "float", viewDimension: "2d", multisampled: false },
+        };
+      })
+    );
+    let layout = device.createBindGroupLayout({ label: label, entries });
+    textureLayouts.push(layout);
+
+    const sampler = device.createSampler({
+      label: label,
+      magFilter: "linear",
+      minFilter: "linear",
+    });
+
+    textureBindGroup = device.createBindGroup({
+      label: label,
+      layout,
+      entries: [
+        {
+          binding: 0,
+          resource: sampler,
+        } as GPUBindGroupEntry,
+      ].concat(
+        textures.map((texture, idx) => {
+          return {
+            binding: idx + 1,
+            resource: texture.createView(),
+          };
+        })
+      ),
+    });
+  }
+
+  return {
+    layouts: textureLayouts,
+    bindGroup: textureBindGroup,
+  };
+}
 
 /** send command buffer to device and render */
 export function paintLagopusTree() {
