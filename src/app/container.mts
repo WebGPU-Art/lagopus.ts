@@ -4,7 +4,7 @@ import blinkWgsl from "../../shaders/blink.wgsl";
 
 import { flattenData, group, object } from "../alias.mjs";
 import { LagopusElement, V3 } from "../primes.mjs";
-import { compButton, compSlider, compDragPoint } from "../comp/button.mjs";
+import { compButton, compSlider, compDragPoint, compFlatButton } from "../comp/button.mjs";
 
 export let compContainer = (store: { position: V3 }, resources: Record<string, GPUTexture>): LagopusElement => {
   return group(
@@ -85,6 +85,15 @@ export let compContainer = (store: { position: V3 }, resources: Record<string, G
     compButton(
       {
         position: [100, -40, 0] as V3,
+        size: 10,
+      },
+      (e, d) => {
+        console.log("clicked", e, d);
+      }
+    ),
+    compFlatButton(
+      {
+        position: [240, 0, 0] as V3,
         size: 10,
       },
       (e, d) => {
