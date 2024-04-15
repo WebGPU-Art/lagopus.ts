@@ -225,5 +225,6 @@ export let compFlatButton = (
       position: [...position, i],
       color,
     })),
+    getParams: () => [props.size, 0, 0, 0],
   });
 };

@@ -11,7 +11,10 @@ struct UBO {
 };
 
 struct Params {
-  flat_mark: f32,
+  size: f32,
+  p1: f32,
+  p2: f32,
+  p3: f32
 }
 
 @group(0) @binding(0) var<uniform> uniforms: UBO;
@@ -69,7 +72,7 @@ fn vertex_main(
 ) -> VertexOut {
   var output: VertexOut;
   var point_position = position.xyz;
-  let radius: f32 = 8.;
+  let radius: f32 = 1. * params.size;
   let right = uniforms.rightward;
   let up = uniforms.upward;
   var offset = 1.;
