@@ -35,13 +35,15 @@ export let createRenderer = (
   vertices: (Float32Array | Uint32Array)[],
   hitRegion: LagopusHitRegion,
   indices: Uint32Array,
-  getParams: () => number[]
+  getParams: () => number[],
+  textures: GPUTexture[],
+  label: string
 ): LagopusObjectData => {
   // load shared device
   let device = atomDevice.deref();
 
   let vertexBuffers = vertices.map((v) => createBuffer(v, GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST));
-  let indecesBuffer = indices ? createBuffer(indices, GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST) : null;
+  let indicesBuffer = indices ? createBuffer(indices, GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST) : null;
 
   const vertexBuffersDescriptors = attrsList.map((info, idx) => {
     let stride = readFormatSize(info.format);
@@ -60,6 +62,7 @@ export let createRenderer = (
 
   // ~~ DEFINE BASIC SHADERS ~~
   const shaderModule = device.createShaderModule({
+    label,
     code: shaderCode,
   });
 
@@ -76,8 +79,10 @@ export let createRenderer = (
     vertexBuffers,
     length: verticesLength,
     hitRegion: hitRegion,
-    indices: indecesBuffer,
+    indices: indicesBuffer,
     getParams,
+    textures,
+    label,
   };
 };
 
@@ -126,15 +131,16 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
   let customParamsBuffer = createBuffer(customParams, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST);
   // console.log(info.getParams?.(), uniformData.length, uniformBuffer);
 
-  let emptyBuffer = {}; // TODO don't know why, but fixes, https://programmer.ink/think/several-best-practices-of-webgpu.html
   let uniformBindGroupLayout = device.createBindGroupLayout({
+    label: info.label,
     entries: [
-      { binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: emptyBuffer },
-      { binding: 1, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: emptyBuffer },
+      { binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: "uniform" } },
+      { binding: 1, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: "uniform" } },
     ],
   });
 
   let uniformBindGroup: GPUBindGroup = device.createBindGroup({
+    label: info.label,
     layout: uniformBindGroupLayout,
     entries: [
       { binding: 0, resource: { buffer: uniformBuffer } },
@@ -142,12 +148,17 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
     ],
   });
 
-  const pipelineLayoutDesc = { bindGroupLayouts: [uniformBindGroupLayout] };
-  let renderLayout = device.createPipelineLayout(pipelineLayoutDesc);
+  let texturesInfo = prepareTextures(device, info.textures, info.label);
+
+  let renderLayout = device.createPipelineLayout({
+    label: info.label,
+    bindGroupLayouts: [uniformBindGroupLayout, texturesInfo.layout].filter(Boolean),
+  });
 
   // ~~ CREATE RENDER PIPELINE ~~
   const presentationFormat = window.navigator.gpu.getPreferredCanvasFormat();
   const pipeline = device.createRenderPipeline({
+    label: info.label,
     layout: renderLayout,
     vertex: {
       module: shaderModule,
@@ -220,6 +231,11 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
   const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
 
   passEncoder.setBindGroup(0, uniformBindGroup);
+  if (texturesInfo.bindGroup) {
+    // occupies 1 for texture
+    passEncoder.setBindGroup(1, texturesInfo.bindGroup);
+  }
+
   passEncoder.setPipeline(pipeline);
   // let w = window.innerWidth * devicePixelRatio;
   // let h = window.innerHeight * devicePixelRatio;
@@ -265,6 +281,60 @@ const createBuffer = (arr: Float32Array | Uint32Array, usage: number) => {
   buffer.unmap();
   return buffer;
 };
+
+/** based on code https://webgpu.github.io/webgpu-samples/?sample=imageBlur#fullscreenTexturedQuad.wgsl */
+function prepareTextures(device: GPUDevice, textures: GPUTexture[], label: string) {
+  let textureBindGroup: GPUBindGroup = undefined;
+  let layout: GPUBindGroupLayout = undefined;
+
+  if (textures && textures[0]) {
+    let entries: GPUBindGroupLayoutEntry[] = [
+      {
+        binding: 0,
+        visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+        sampler: { type: "filtering" },
+      } as GPUBindGroupLayoutEntry,
+    ].concat(
+      textures.map((texture, idx) => {
+        return {
+          binding: idx + 1,
+          visibility: GPUShaderStage.FRAGMENT,
+          texture: { sampleType: "float", viewDimension: "2d", multisampled: false },
+        };
+      })
+    );
+    layout = device.createBindGroupLayout({ label: label, entries });
+
+    const sampler = device.createSampler({
+      label: label,
+      magFilter: "linear",
+      minFilter: "linear",
+    });
+
+    textureBindGroup = device.createBindGroup({
+      label: label,
+      layout,
+      entries: [
+        {
+          binding: 0,
+          resource: sampler,
+        } as GPUBindGroupEntry,
+      ].concat(
+        textures.map((texture, idx) => {
+          return {
+            binding: idx + 1,
+            resource: texture.createView(),
+          };
+        })
+      ),
+    });
+  }
+
+  return {
+    layout,
+    bindGroup: textureBindGroup,
+  };
+}
 
 /** send command buffer to device and render */
 export function paintLagopusTree() {
@@ -524,3 +594,13 @@ export function readFormatSize(format: GPUVertexFormat): number {
       throw new Error(`Unimplemented format size for: ${format}`);
   }
 }
+
+export let createTextureFromSource = (device: GPUDevice, source: { w: number; h: number; source: GPUImageCopyExternalImageSource }) => {
+  let texture = device.createTexture({
+    size: { width: source.w, height: source.h },
+    format: "rgba8unorm",
+    usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
+  });
+  device.queue.copyExternalImageToTexture(source, { texture }, { width: source.w, height: source.h });
+  return texture;
+};

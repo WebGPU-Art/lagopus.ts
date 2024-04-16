@@ -13,7 +13,7 @@ import {
 } from "./global.mjs";
 
 /** init canvas context */
-export const initializeContext = async (): Promise<any> => {
+export const initializeContext = async () => {
   // ~~ INITIALIZE ~~ Make sure we can initialize WebGPU
   if (!navigator.gpu) {
     console.error("WebGPU cannot be initialized - navigator.gpu not found");
@@ -56,6 +56,8 @@ export const initializeContext = async (): Promise<any> => {
 
   // set as a shared context
   atomContext.reset(context);
+
+  return { device };
 };
 
 /** create a texture for canvas */

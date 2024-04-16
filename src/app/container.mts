@@ -1,14 +1,16 @@
 import triangleWgsl from "../../shaders/triangle.wgsl";
+import imageWgsl from "../../shaders/image.wgsl";
 import blinkWgsl from "../../shaders/blink.wgsl";
 
 import { flattenData, group, object } from "../alias.mjs";
 import { LagopusElement, V3 } from "../primes.mjs";
-import { compButton, compSlider, compDragPoint } from "../comp/button.mjs";
+import { compButton, compSlider, compDragPoint, compFlatButton } from "../comp/button.mjs";
 
-export let compContainer = (store: { position: V3 }): LagopusElement => {
+export let compContainer = (store: { position: V3 }, resources: Record<string, GPUTexture>): LagopusElement => {
   return group(
     null,
     object({
+      label: "triangle",
       shader: triangleWgsl,
       topology: "triangle-list",
       // topology: "line-strip",
@@ -24,6 +26,7 @@ export let compContainer = (store: { position: V3 }): LagopusElement => {
     }),
     null,
     object({
+      label: "triangle",
       shader: triangleWgsl,
       topology: "triangle-list",
       attrsList: [
@@ -47,6 +50,7 @@ export let compContainer = (store: { position: V3 }): LagopusElement => {
       // indices: [0, 1, 2, 3, 4, 5],
     }),
     object({
+      label: "triangle",
       shader: triangleWgsl,
       topology: "triangle-list",
       attrsList: [
@@ -69,6 +73,7 @@ export let compContainer = (store: { position: V3 }): LagopusElement => {
     }),
 
     object({
+      label: "blink",
       shader: blinkWgsl,
       topology: "triangle-list",
       attrsList: [{ field: "position", format: "float32x4" }],
@@ -80,6 +85,15 @@ export let compContainer = (store: { position: V3 }): LagopusElement => {
     compButton(
       {
         position: [100, -40, 0] as V3,
+        size: 10,
+      },
+      (e, d) => {
+        console.log("clicked", e, d);
+      }
+    ),
+    compFlatButton(
+      {
+        position: [240, 0, 0] as V3,
         size: 10,
       },
       (e, d) => {
@@ -103,6 +117,25 @@ export let compContainer = (store: { position: V3 }): LagopusElement => {
       (newPos, d) => {
         d("drag", newPos);
       }
-    )
+    ),
+
+    object({
+      label: "image",
+      shader: imageWgsl,
+      topology: "triangle-list",
+      attrsList: [
+        { field: "position", format: "float32x4" },
+        { field: "uv", format: "float32x2" },
+      ],
+      textures: [resources["tiye"]],
+      data: [
+        { position: [120.0, 80.0, 30, 1], uv: [0, 1] },
+        { position: [200.0, 80.0, 30, 1], uv: [1, 1] },
+        { position: [120.0, 160.0, 30, 1], uv: [0, 0] },
+        { position: [200.0, 80.0, 30, 1], uv: [1, 1] },
+        { position: [120.0, 160.0, 30, 1], uv: [0, 0] },
+        { position: [200.0, 160.0, 30, 1], uv: [1, 0] },
+      ],
+    })
   );
 };

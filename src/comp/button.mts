@@ -10,6 +10,7 @@ let atomDragCache = new Atom<{ x: number; y: number }>({
 });
 
 import triangleWgsl from "../../shaders/triangle.wgsl";
+import flatButtonWgsl from "../../shaders/flat-button.wgsl";
 import { atomViewerForward, atomViewerPosition, atomViewerUpward, newLookatPoint, atomViewerScale } from "../perspective.mjs";
 import { coneBackScale } from "../config.mjs";
 import { wLog } from "../global.mjs";
@@ -42,6 +43,7 @@ export let compSlider = (
     onMove([dx, dy], d);
   };
   return object({
+    label: "slider",
     topology: "triangle-list",
     shader: triangleWgsl,
     hitRegion: {
@@ -114,6 +116,7 @@ export let compDragPoint = (
     onMove(vAdd(position, vScale(vAdd(vScale(rightward, dx), vScale(upward, dy)), (screenScale / scaleRadio) * scale)), d);
   };
   return object({
+    label: "drag-point",
     topology: "triangle-list",
     shader: triangleWgsl,
     hitRegion: {
@@ -170,6 +173,7 @@ export let compButton = (
   ];
   let indices = [0, 5, 2, 1, 4, 2, 1, 5, 3, 0, 4, 3];
   return object({
+    label: "button",
     topology: "triangle-list",
     shader: triangleWgsl,
     hitRegion: {
@@ -187,5 +191,40 @@ export let compButton = (
       position: [...vAdd(geo[i].map((x) => x * size) as V3, position), 1.0],
       color,
     })),
+  });
+};
+
+export let compFlatButton = (
+  props: {
+    position: V3;
+    size?: number;
+    color?: V3;
+  },
+  onClick: (e: MouseEvent, d: FnDispatch) => void
+): LagopusObjectData => {
+  let position = props.position;
+  let size = props.size ?? 20;
+  let color = props.color ?? [0.6, 1, 0.56, 1.0];
+  let indices = [0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 4, 5, 0, 5, 6, 0, 6, 1];
+  return object({
+    label: "flat-button",
+    topology: "triangle-list",
+    shader: flatButtonWgsl,
+    hitRegion: {
+      position,
+      radius: size,
+      onHit: (e: MouseEvent, d: FnDispatch) => {
+        onClick(e, d);
+      },
+    },
+    attrsList: [
+      { field: "position", format: "float32x4" },
+      { field: "color", format: "float32x4" },
+    ],
+    data: indices.map((i) => ({
+      position: [...position, i],
+      color,
+    })),
+    getParams: () => [props.size, 0, 0, 0],
   });
 };

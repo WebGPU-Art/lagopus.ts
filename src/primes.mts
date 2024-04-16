@@ -14,6 +14,7 @@ export interface LagopusAttribute {
 }
 
 export interface LagopusObjectOptions {
+  label?: string;
   shader: string;
   topology: GPUPrimitiveTopology;
   attrsList: LagopusAttribute[];
@@ -23,6 +24,7 @@ export interface LagopusObjectOptions {
   getParams?: () => number[];
   /** @deprecated use `getParams` now */
   addUniform?: () => number[];
+  textures?: GPUTexture[];
 }
 
 export interface LagopusObjectData {
@@ -35,6 +37,8 @@ export interface LagopusObjectData {
   hitRegion?: LagopusHitRegion;
   indices?: GPUBuffer;
   getParams?: () => number[];
+  textures?: GPUTexture[];
+  label: string;
 }
 
 export interface LagopusGroup {
