@@ -5,8 +5,6 @@ import {
   atomDevice,
   atomBufferNeedClear,
   atomLagopusTree,
-  atomProxiedDispatch,
-  atomObjectsTree,
   atomClearColor,
   atomCanvasTexture,
   atomCommandEncoder,
@@ -71,26 +69,20 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
     bindGroupLayouts: [uniformBindGroupLayout, texturesInfo.layout].filter(Boolean),
   });
 
-  // ~~ CREATE RENDER PIPELINE ~~
+  //
+  // Create render pipeline
+  //
+
   const presentationFormat = window.navigator.gpu.getPreferredCanvasFormat();
+  /** pick uint32 for general usages */
+  const stripIndexFormat: GPUIndexFormat = topology === "line-strip" || topology === "triangle-strip" ? "uint32" : undefined;
+
   const pipeline = device.createRenderPipeline({
     label: info.label,
     layout: renderLayout,
-    vertex: {
-      module: shaderModule,
-      entryPoint: "vertex_main",
-      buffers: vertexBuffersDescriptors,
-    },
-    fragment: {
-      module: shaderModule,
-      entryPoint: "fragment_main",
-      targets: [{ format: presentationFormat, blend: blendState }],
-    },
-    primitive: {
-      topology,
-      // pick uint32 for general usages
-      stripIndexFormat: topology === "line-strip" || topology === "triangle-strip" ? "uint32" : undefined,
-    },
+    vertex: { module: shaderModule, entryPoint: "vertex_main", buffers: vertexBuffersDescriptors },
+    fragment: { module: shaderModule, entryPoint: "fragment_main", targets: [{ format: presentationFormat, blend: blendState }] },
+    primitive: { topology, stripIndexFormat },
     depthStencil: { depthWriteEnabled: true, depthCompare: "less", format: "depth24plus-stencil8" },
     // multisample: atomBloomEnabled.deref() ? undefined : { count: 4 },
   });
@@ -98,24 +90,22 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
   let needClear = atomBufferNeedClear.deref();
   let loadOp: GPULoadOp = needClear ? "clear" : "load";
 
-  // ~~ CREATE RENDER PASS DESCRIPTOR ~~
+  //
+  // Create render pass descriptor
+  //
+
+  let clearValue = atomClearColor.deref() ?? { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
+  let view = atomBloomEnabled.deref() ? atomCanvasTexture.deref().createView() : context.getCurrentTexture().createView();
+  // resolveTarget: atomBloomEnabled.deref() ? undefined : context.getCurrentTexture().createView(),
   const renderPassDescriptor: GPURenderPassDescriptor = {
-    colorAttachments: [
-      {
-        clearValue: atomClearColor.deref() ?? { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
-        loadOp: loadOp,
-        storeOp: "store" as GPUStoreOp,
-        view: atomBloomEnabled.deref() ? atomCanvasTexture.deref().createView() : context.getCurrentTexture().createView(),
-        // resolveTarget: atomBloomEnabled.deref() ? undefined : context.getCurrentTexture().createView(),
-      },
-    ],
+    colorAttachments: [{ clearValue, loadOp: loadOp, storeOp: "store" as GPUStoreOp, view }],
     depthStencilAttachment: {
       view: depthTexture.createView(),
       depthClearValue: 1,
       depthLoadOp: loadOp,
-      depthStoreOp: "store" as GPUStoreOp,
-      stencilLoadOp: "clear" as GPULoadOp,
-      stencilStoreOp: "store" as GPUStoreOp,
+      depthStoreOp: "store",
+      stencilLoadOp: "clear",
+      stencilStoreOp: "store",
     },
   };
 
