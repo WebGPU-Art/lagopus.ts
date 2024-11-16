@@ -1,4 +1,4 @@
-import { ComputeOptions, LagopusAttribute, LagopusElement, LagopusHitRegion, LagopusObjectData, LagopusRenderer } from "./primes.mjs";
+import { ComputeOptions, LagopusAttribute, LagopusElement, LagopusHitRegion, LagopusObjectData, LagopusRenderObject } from "./primes.mjs";
 
 import { createBuffer, readFormatSize } from "./util.mjs";
 import { atomDevice, atomLagopusTree, atomProxiedDispatch, atomObjectsTree } from "./global.mjs";
@@ -17,7 +17,7 @@ export let createRenderer = (
   textures: GPUTexture[],
   label: string,
   computeOptions?: ComputeOptions
-): LagopusRenderer => {
+): LagopusRenderObject => {
   // load shared device
   let device = atomDevice.deref();
 
@@ -46,6 +46,7 @@ export let createRenderer = (
 
   return {
     type: "object",
+    hitRegion,
     renderer: makePainter({
       type: "object",
       topology: topology,
@@ -64,7 +65,7 @@ export let createRenderer = (
 };
 
 /** track tree, internally it calls `paintLagopusTree` to render */
-export function renderLagopusTree(tree: LagopusRenderer, dispatch: (op: any, data: any) => void) {
+export function renderLagopusTree(tree: LagopusRenderObject, dispatch: (op: any, data: any) => void) {
   atomLagopusTree.reset(tree);
   atomProxiedDispatch.reset(dispatch);
   atomObjectsTree.reset(tree);

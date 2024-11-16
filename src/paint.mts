@@ -1,4 +1,4 @@
-import { LagopusElement, LagopusObjectData, LagopusRenderer } from "./primes.mjs";
+import { LagopusElement, LagopusObjectData, LagopusRenderObject } from "./primes.mjs";
 import {
   atomDepthTexture,
   atomContext,
@@ -243,7 +243,7 @@ export let makePainter = (info: LagopusObjectData): ((l: number) => void) => {
   };
 };
 
-export let triggerRendering = (t: number, el: LagopusRenderer) => {
+export let triggerRendering = (t: number, el: LagopusRenderObject) => {
   if (el == null) return;
   if (el.type === "object") {
     el.renderer(t);

@@ -1,7 +1,7 @@
 import { createRenderer } from "./renderer.mjs";
-import { LagopusObjectData, LagopusObjectOptions, LagopusGroup, LagopusRenderer } from "./primes.mjs";
+import { LagopusObjectData, LagopusObjectOptions, LagopusGroup, LagopusRenderObject } from "./primes.mjs";
 
-export let group = (options: any, ...children: any[]): LagopusRenderer => {
+export let group = (options: any, ...children: any[]): LagopusRenderObject => {
   return {
     type: "group",
     children,
@@ -9,7 +9,7 @@ export let group = (options: any, ...children: any[]): LagopusRenderer => {
 };
 
 /** create a render object */
-export let object = (options: LagopusObjectOptions): LagopusRenderer => {
+export let object = (options: LagopusObjectOptions): LagopusRenderObject => {
   let { attrsList, data } = options;
 
   let buffers = attrsList.map((attr) => {

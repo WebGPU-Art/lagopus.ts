@@ -2,7 +2,7 @@ import { object } from "../alias.mjs";
 import { vAdd, vCross, vDot, vScale, vSub } from "@triadica/touch-control";
 
 import { Atom } from "@triadica/touch-control";
-import { FnDispatch, V3, V2, LagopusObjectData } from "../primes.mjs";
+import { FnDispatch, V3, V2, LagopusObjectData, LagopusRenderObject } from "../primes.mjs";
 
 let atomDragCache = new Atom<{ x: number; y: number }>({
   x: 0,
@@ -23,7 +23,7 @@ export let compSlider = (
     color?: V3;
   },
   onMove: (delta: V2, dispatch: FnDispatch) => void
-): LagopusObjectData => {
+): LagopusRenderObject => {
   let { position } = props;
   let geo: V3[] = [
     [1, 0, 0],
@@ -85,7 +85,7 @@ export let compDragPoint = (
     color?: V3;
   },
   onMove: (p: V3, d: FnDispatch) => void
-): LagopusObjectData => {
+): LagopusRenderObject => {
   let position = props.position;
   let ignoreMoving = props.ignoreMoving ?? false;
   let geo: V3[] = [
@@ -159,7 +159,7 @@ export let compButton = (
     color?: V3;
   },
   onClick: (e: MouseEvent, d: FnDispatch) => void
-): LagopusObjectData => {
+): LagopusRenderObject => {
   let position = props.position;
   let size = props.size ?? 20;
   let color = props.color ?? [0.6, 1, 0.56, 1.0];
@@ -201,7 +201,7 @@ export let compFlatButton = (
     color?: V3;
   },
   onClick: (e: MouseEvent, d: FnDispatch) => void
-): LagopusObjectData => {
+): LagopusRenderObject => {
   let position = props.position;
   let size = props.size ?? 20;
   let color = props.color ?? [0.6, 1, 0.56, 1.0];

@@ -48,10 +48,11 @@ export interface LagopusObjectData {
   computeOptions?: ComputeOptions;
 }
 
-export interface LagopusRenderer {
+export interface LagopusRenderObject {
   type: "object" | "group";
   renderer?: (t: number) => void;
-  children?: LagopusRenderer[];
+  children?: LagopusRenderObject[];
+  hitRegion?: LagopusHitRegion;
 }
 
 export interface LagopusGroup {

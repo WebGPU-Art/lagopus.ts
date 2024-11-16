@@ -4,11 +4,11 @@ import blinkWgsl from "../../shaders/blink.wgsl";
 import triangleComputeWgsl from "../../shaders/triangle-compute.wgsl";
 
 import { flattenData, group, object } from "../alias.mjs";
-import { LagopusElement, LagopusRenderer, V3 } from "../primes.mjs";
+import { LagopusElement, LagopusRenderObject, V3 } from "../primes.mjs";
 import { compButton, compSlider, compDragPoint, compFlatButton } from "../comp/button.mjs";
 import { makeAlignedFloat32Array } from "../util.mjs";
 
-export let compContainer = (store: { position: V3 }, resources: Record<string, GPUTexture>): LagopusRenderer => {
+export let compContainer = (store: { position: V3 }, resources: Record<string, GPUTexture>): LagopusRenderObject => {
   return group(
     null,
     object({

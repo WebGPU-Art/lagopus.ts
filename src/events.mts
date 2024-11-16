@@ -4,9 +4,9 @@ import { atomMouseHoldingPaths, atomObjectsBuffer, atomObjectsTree, atomProxiedD
 import isMobile from "ismobilejs";
 import { cDistance } from "./math.mjs";
 import { atomViewerScale, transform3d } from "./perspective.mjs";
-import { LagopusElement, LagopusObjectData } from "./primes.mjs";
+import { LagopusElement, LagopusObjectData, LagopusRenderObject } from "./primes.mjs";
 
-export let traverseTree = (tree: LagopusElement, coord: number[], cb: (obj: LagopusObjectData, coord: number[]) => void) => {
+export let traverseTree = (tree: LagopusRenderObject, coord: number[], cb: (obj: LagopusRenderObject, coord: number[]) => void) => {
   if (tree != null) {
     switch (tree.type) {
       case "object":
@@ -158,7 +158,7 @@ let findNearest = (
   }
 };
 
-let loadTreeNode = (tree: LagopusElement, path: number[]): LagopusElement => {
+let loadTreeNode = (tree: LagopusRenderObject, path: number[]): LagopusRenderObject => {
   if (path.length === 0) {
     return tree;
   } else if (tree.type === "group") {
