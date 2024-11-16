@@ -48,13 +48,7 @@ export let createRenderer = (
   const vertexBuffersDescriptors = attrsList.map((info, idx) => {
     let stride = readFormatSize(info.format);
     return {
-      attributes: [
-        {
-          shaderLocation: idx,
-          offset: 0,
-          format: info.format,
-        },
-      ],
+      attributes: [{ shaderLocation: idx, offset: 0, format: info.format }],
       arrayStride: stride,
       stepMode: "vertex" as GPUVertexStepMode,
     } as GPUVertexBufferLayout;
@@ -97,33 +91,15 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
   // based on code from https://alain.xyz/blog/raw-webgpu
 
   let lookAt = newLookatPoint();
+  let lookDistance = vLength(lookAt);
   let forward = vNormalize(lookAt);
+  let upward = atomViewerUpward.deref();
   let rightward = vCross(forward, atomViewerUpward.deref());
+  let viewportRatio = window.innerHeight / window.innerWidth;
+  let viewerScale = atomViewerScale.deref();
+  let viewerPosition = atomViewerPosition.deref();
   // 👔 Uniform Data
-  const uniformData = new Float32Array([
-    // coneBackScale
-    coneBackScale,
-    // viewport_ratio
-    window.innerHeight / window.innerWidth,
-    vLength(lookAt),
-    // alignment
-    atomViewerScale.deref(),
-    // lookpoint
-    ...forward,
-    // alignment
-    0,
-    // upwardDirection
-    ...atomViewerUpward.deref(),
-    // alignment
-    0,
-    ...rightward,
-    // alignment
-    0,
-    // cameraPosition
-    ...atomViewerPosition.deref(),
-    // alignment
-    0,
-  ]);
+  const uniformData = makeAlignedFloat32Array(coneBackScale, viewportRatio, lookDistance, viewerScale, forward, upward, rightward, viewerPosition);
 
   const customParams = new Float32Array([...(info.getParams?.() || [0])]);
 
@@ -168,37 +144,14 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
     fragment: {
       module: shaderModule,
       entryPoint: "fragment_main",
-      targets: [
-        {
-          format: presentationFormat,
-          // TODO need to learn more details
-          // https://github.com/takahirox/webgpu-trial/blob/master/cube_alpha_blend.html#L273
-          // https://github.com/kdashg/webgpu-js/blob/master/hello-blend.html#L98
-          blend: {
-            color: {
-              srcFactor: "src-alpha",
-              dstFactor: "one-minus-src-alpha",
-              operation: "add",
-            },
-            alpha: {
-              srcFactor: "one",
-              dstFactor: "one-minus-src-alpha",
-              operation: "add",
-            },
-          },
-        },
-      ],
+      targets: [{ format: presentationFormat, blend: blendState }],
     },
     primitive: {
       topology,
       // pick uint32 for general usages
       stripIndexFormat: topology === "line-strip" || topology === "triangle-strip" ? "uint32" : undefined,
     },
-    depthStencil: {
-      depthWriteEnabled: true,
-      depthCompare: "less",
-      format: "depth24plus-stencil8",
-    },
+    depthStencil: { depthWriteEnabled: true, depthCompare: "less", format: "depth24plus-stencil8" },
     // multisample: atomBloomEnabled.deref() ? undefined : { count: 4 },
   });
 
@@ -603,4 +556,45 @@ export let createTextureFromSource = (device: GPUDevice, source: { w: number; h:
   });
   device.queue.copyExternalImageToTexture(source, { texture }, { width: source.w, height: source.h });
   return texture;
+};
+
+// a function that takes a spreading list of number or array of number and return a Float32Array
+// **each** piece of data should be agliend to 4 bytes according to webgpu buffer requirement
+// if size of data is larger than 1, its start position should be aligned to 2 byte
+// if size of data is larger than 2, its start position should be aligned to 4 bytes
+// this algorithm may not be accurate, but enough for my case
+let makeAlignedFloat32Array = (...data: (number | number[])[]): Float32Array => {
+  let result: number[] = [];
+  for (let d of data) {
+    if (Array.isArray(d)) {
+      let size = d.length;
+      if (size < 2) {
+        result.push(d[0]);
+      } else if (size < 4) {
+        while (result.length % 2) {
+          result.push(0);
+        }
+        result.push(...d);
+      } else {
+        while (result.length % 4) {
+          result.push(0);
+        }
+        result.push(...d);
+      }
+    } else {
+      result.push(d);
+    }
+  }
+  while (result.length % 4) {
+    result.push(0);
+  }
+  return new Float32Array(result);
+};
+
+// TODO need to learn more details
+// https://github.com/takahirox/webgpu-trial/blob/master/cube_alpha_blend.html#L273
+// https://github.com/kdashg/webgpu-js/blob/master/hello-blend.html#L98
+let blendState: GPUBlendState = {
+  color: { srcFactor: "src-alpha", dstFactor: "one-minus-src-alpha", operation: "add" },
+  alpha: { srcFactor: "one", dstFactor: "one-minus-src-alpha", operation: "add" },
 };
