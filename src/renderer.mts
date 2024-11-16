@@ -65,7 +65,6 @@ export function renderLagopusTree(tree: LagopusElement, dispatch: (op: any, data
   atomLagopusTree.reset(tree);
   atomProxiedDispatch.reset(dispatch);
   atomObjectsTree.reset(tree);
-  paintLagopusTree();
 }
 
 export function resetCanvasSize(canvas: HTMLCanvasElement) {

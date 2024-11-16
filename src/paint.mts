@@ -25,7 +25,7 @@ let blendState: GPUBlendState = {
   color: { srcFactor: "src-alpha", dstFactor: "one-minus-src-alpha", operation: "add" },
   alpha: { srcFactor: "one", dstFactor: "one-minus-src-alpha", operation: "add" },
 };
-let buildCommandBuffer = (t: number, info: LagopusObjectData): void => {
+let buildCommandBuffer = (loopTimes: number, info: LagopusObjectData): void => {
   let { topology, shaderModule, vertexBuffersDescriptors, vertexBuffers, indices } = info;
   let { computeOptions } = info;
 
@@ -46,8 +46,7 @@ let buildCommandBuffer = (t: number, info: LagopusObjectData): void => {
   let viewerPosition = atomViewerPosition.deref();
   // 👔 Uniform Data
   const uniformData = makeAlignedFloat32Array(coneBackScale, viewportRatio, lookDistance, viewerScale, forward, upward, rightward, viewerPosition);
-
-  const customParams = new Float32Array([...(info.getParams?.() || [0])]);
+  const customParams = makeAlignedFloat32Array(info.getParams?.() || [0]);
 
   let uniformBuffer = createBuffer(uniformData, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, "uniform");
   let customParamsBuffer = createBuffer(customParams, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, "params");
@@ -108,9 +107,9 @@ let buildCommandBuffer = (t: number, info: LagopusObjectData): void => {
       particleBuffers[i].unmap();
     }
 
+    let computeParticleBindGroups = setupParticlesBindGroups(device, computeParticlesLayout, particleBuffers, computeOptions.initialBuffer.byteLength);
     // overwrites
-    let computeParticleBindGroups = setupParticlesBindGroups(device, computeParticlesLayout, particleBuffers, computeOptions.particleCount);
-    particleBindGroups = setupParticlesBindGroups(device, renderParticlesLayout, particleBuffers, computeOptions.particleCount);
+    particleBindGroups = setupParticlesBindGroups(device, renderParticlesLayout, particleBuffers, computeOptions.initialBuffer.byteLength);
 
     let uniformsComputeLayout = device.createBindGroupLayout({
       label: info.label + "@compute",
@@ -142,7 +141,7 @@ let buildCommandBuffer = (t: number, info: LagopusObjectData): void => {
         entries: uniformEntries,
       })
     );
-    computePassEncoder.setBindGroup(1, computeParticleBindGroups[t % 2]);
+    computePassEncoder.setBindGroup(1, computeParticleBindGroups[loopTimes % 2]);
     computePassEncoder.dispatchWorkgroups(Math.ceil(computeOptions.particleCount / 64));
     computePassEncoder.end();
   }
@@ -212,7 +211,7 @@ let buildCommandBuffer = (t: number, info: LagopusObjectData): void => {
     renderEncoder.setBindGroup(1, texturesInfo.bindGroup);
   }
   if (computeOptions) {
-    renderEncoder.setBindGroup(1, particleBindGroups[t % 2]); // MOCKED
+    renderEncoder.setBindGroup(1, particleBindGroups[loopTimes % 2]);
   }
 
   // let w = window.innerWidth * devicePixelRatio;
@@ -264,9 +263,7 @@ export function paintLagopusTree() {
   device.queue.submit([commandEncoder.finish()]);
 }
 
-/** setup buffer for compute shader,
- * also mock some buffer in render pass
- */
+/** setup buffer for compute shader */
 let setupParticlesBindGroups = (device: GPUDevice, layout: GPUBindGroupLayout, particleBuffers: GPUBuffer[], byteLength: number) => {
   const particleBindGroups: GPUBindGroup[] = new Array(2);
 
@@ -277,8 +274,8 @@ let setupParticlesBindGroups = (device: GPUDevice, layout: GPUBindGroupLayout, p
       label: "shared",
       layout: layout,
       entries: [
-        { binding: 0, resource: { buffer: fromBuffer, size: byteLength * 16 } }, // TODO
-        { binding: 1, resource: { buffer: toBuffer, size: byteLength * 16 } },
+        { binding: 0, resource: { buffer: fromBuffer, size: byteLength } },
+        { binding: 1, resource: { buffer: toBuffer, size: byteLength } },
       ],
     });
   }
