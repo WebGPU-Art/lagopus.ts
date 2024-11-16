@@ -39,6 +39,10 @@ export interface LagopusObjectData {
   getParams?: () => number[];
   textures?: GPUTexture[];
   label: string;
+  computeOptions?: {
+    particleCount: number;
+    initialBuffer: Float32Array;
+  };
 }
 
 export interface LagopusGroup {

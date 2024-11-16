@@ -18,8 +18,9 @@ import { clearCanvas } from "./clear";
 import { postRendering, prepareTextures } from "./post-rendering.mjs";
 import { createBuffer, makeAlignedFloat32Array } from "./util.mjs";
 
-let buildCommandBuffer = (info: LagopusObjectData): void => {
+let buildCommandBuffer = (t: number, info: LagopusObjectData): void => {
   let { topology, shaderModule, vertexBuffersDescriptors, vertexBuffers, indices } = info;
+  let { computeOptions } = info;
 
   let device = atomDevice.deref();
   let context = atomContext.deref();
@@ -53,13 +54,15 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
     ],
   });
 
+  let uniformEntries: GPUBindGroupEntry[] = [
+    { binding: 0, resource: { buffer: uniformBuffer } },
+    { binding: 1, resource: { buffer: customParamsBuffer } },
+  ];
+
   let uniformBindGroup: GPUBindGroup = device.createBindGroup({
     label: info.label,
     layout: uniformBindGroupLayout,
-    entries: [
-      { binding: 0, resource: { buffer: uniformBuffer } },
-      { binding: 1, resource: { buffer: customParamsBuffer } },
-    ],
+    entries: uniformEntries,
   });
 
   let texturesInfo = prepareTextures(device, info.textures, info.label);
@@ -77,7 +80,58 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
   /** pick uint32 for general usages */
   const stripIndexFormat: GPUIndexFormat = topology === "line-strip" || topology === "triangle-strip" ? "uint32" : undefined;
 
-  const pipeline = device.createRenderPipeline({
+  const commandEncoder = atomCommandEncoder.deref();
+
+  // Encode compute pass
+
+  if (computeOptions) {
+    const particleBuffers: GPUBuffer[] = new Array(2);
+    for (let i = 0; i < 2; ++i) {
+      particleBuffers[i] = device.createBuffer({
+        size: computeOptions.initialBuffer.byteLength,
+        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.STORAGE,
+        mappedAtCreation: true,
+      });
+      new Float32Array(particleBuffers[i].getMappedRange()).set(computeOptions.initialBuffer);
+      particleBuffers[i].unmap();
+    }
+
+    let computeParticlesLayout = device.createBindGroupLayout({
+      entries: computeParticleEntries,
+    });
+
+    let { particleBindGroups, mockedBindGroups } = setupParticlesBindGroups(device, computeParticlesLayout, particleBuffers, computeOptions.particleCount);
+
+    const computePipeline = device.createComputePipeline({
+      layout: device.createPipelineLayout({
+        bindGroupLayouts: [device.createBindGroupLayout({ entries: computeUniformEntries }), computeParticlesLayout],
+      }),
+      compute: {
+        module: shaderModule,
+        entryPoint: "main",
+      },
+    });
+
+    const computePassEncoder = commandEncoder.beginComputePass();
+    computePassEncoder.setPipeline(computePipeline);
+    computePassEncoder.setBindGroup(
+      0,
+      device.createBindGroup({
+        // pass two uniforms, one for global view options, one for params
+        layout: device.createBindGroupLayout({ entries: computeUniformEntries }),
+        entries: uniformEntries,
+      })
+    );
+    computePassEncoder.setBindGroup(1, particleBindGroups[t % 2]);
+    computePassEncoder.dispatchWorkgroups(Math.ceil(computeOptions.particleCount / 64));
+    computePassEncoder.end();
+  }
+
+  //
+  // Create render pass descriptor
+  //
+
+  const renderPipeline = device.createRenderPipeline({
     label: info.label,
     layout: renderLayout,
     vertex: { module: shaderModule, entryPoint: "vertex_main", buffers: vertexBuffersDescriptors },
@@ -89,10 +143,6 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
 
   let needClear = atomBufferNeedClear.deref();
   let loadOp: GPULoadOp = needClear ? "clear" : "load";
-
-  //
-  // Create render pass descriptor
-  //
 
   let clearValue = atomClearColor.deref() ?? { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
   let view = atomBloomEnabled.deref() ? atomCanvasTexture.deref().createView() : context.getCurrentTexture().createView();
@@ -111,7 +161,8 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
 
   atomBufferNeedClear.reset(false);
 
-  const commandEncoder = atomCommandEncoder.deref();
+  // Encode render pass
+
   const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
 
   passEncoder.setBindGroup(0, uniformBindGroup);
@@ -120,7 +171,7 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
     passEncoder.setBindGroup(1, texturesInfo.bindGroup);
   }
 
-  passEncoder.setPipeline(pipeline);
+  passEncoder.setPipeline(renderPipeline);
   // let w = window.innerWidth * devicePixelRatio;
   // let h = window.innerHeight * devicePixelRatio;
   // this.passEncoder.setViewport(0, 0, w, h, 0, 1);
@@ -139,14 +190,16 @@ let buildCommandBuffer = (info: LagopusObjectData): void => {
   passEncoder.end();
 };
 
-export let collectBuffers = (el: LagopusElement) => {
+export let collectBuffers = (t: number, el: LagopusElement) => {
   if (el == null) return;
   if (el.type === "object") {
-    buildCommandBuffer(el);
+    buildCommandBuffer(t, el);
   } else {
-    el.children.forEach((child) => collectBuffers(child));
+    el.children.forEach((child) => collectBuffers(t, child));
   }
 };
+
+let counter = 0;
 
 /** send command buffer to device and render */
 export function paintLagopusTree() {
@@ -155,7 +208,8 @@ export function paintLagopusTree() {
 
   atomBufferNeedClear.reset(true);
   let tree = atomLagopusTree.deref();
-  collectBuffers(tree);
+  collectBuffers(counter, tree);
+  counter += 1;
 
   if (atomBufferNeedClear.deref()) {
     clearCanvas();
@@ -173,4 +227,55 @@ export function paintLagopusTree() {
 let blendState: GPUBlendState = {
   color: { srcFactor: "src-alpha", dstFactor: "one-minus-src-alpha", operation: "add" },
   alpha: { srcFactor: "one", dstFactor: "one-minus-src-alpha", operation: "add" },
+};
+
+let computeUniformEntries: GPUBindGroupLayoutEntry[] = [
+  { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: "uniform" } },
+  { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: "uniform" } },
+];
+
+/** structure of some ping/pong buffer  */
+let computeParticleEntries: GPUBindGroupLayoutEntry[] = [
+  { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: "read-only-storage" } },
+  { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: "storage" } },
+];
+
+/** setup buffer for compute shader,
+ * also mock some buffer in render pass
+ */
+let setupParticlesBindGroups = (device: GPUDevice, layout: GPUBindGroupLayout, particleBuffers: GPUBuffer[], byteLength: number) => {
+  const particleBindGroups: GPUBindGroup[] = new Array(2);
+  const mockedBindGroups: GPUBindGroup[] = new Array(2);
+
+  for (let i = 0; i < 2; ++i) {
+    let fromBuffer = particleBuffers[i % 2];
+    let toBuffer = particleBuffers[(i + 1) % 2];
+    particleBindGroups[i] = device.createBindGroup({
+      layout: layout,
+      entries: [
+        { binding: 0, resource: { buffer: fromBuffer, size: byteLength } },
+        { binding: 1, resource: { buffer: toBuffer, size: byteLength } },
+      ],
+    });
+    let emptyBuffer = device.createBuffer({
+      size: 4,
+      usage: GPUBufferUsage.STORAGE,
+    });
+    let emptyBuffer2 = device.createBuffer({
+      size: 4,
+      usage: GPUBufferUsage.STORAGE,
+    });
+    mockedBindGroups[i] = device.createBindGroup({
+      layout: layout,
+      entries: [
+        { binding: 0, resource: { buffer: emptyBuffer, size: 4 } },
+        { binding: 1, resource: { buffer: emptyBuffer2, size: 4 } },
+      ],
+    });
+  }
+
+  return {
+    particleBindGroups,
+    mockedBindGroups,
+  };
 };
