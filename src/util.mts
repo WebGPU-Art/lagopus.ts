@@ -35,9 +35,10 @@ export let createTextureFromSource = (device: GPUDevice, source: { w: number; h:
 };
 
 // 👋 Helper function for creating GPUBuffer(s) out of Typed Arrays
-export const createBuffer = (arr: Float32Array | Uint32Array, usage: number) => {
+export const createBuffer = (arr: Float32Array | Uint32Array, usage: number, label: string) => {
   // 📏 Align to 4 bytes (thanks @chrimsonite)
   let desc = {
+    label,
     size: (arr.byteLength + 3) & ~3,
     // size: 64,
     usage,

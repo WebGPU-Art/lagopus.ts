@@ -1,10 +1,12 @@
 import triangleWgsl from "../../shaders/triangle.wgsl";
 import imageWgsl from "../../shaders/image.wgsl";
 import blinkWgsl from "../../shaders/blink.wgsl";
+import triangleComputeWgsl from "../../shaders/triangle-compute.wgsl";
 
 import { flattenData, group, object } from "../alias.mjs";
 import { LagopusElement, V3 } from "../primes.mjs";
 import { compButton, compSlider, compDragPoint, compFlatButton } from "../comp/button.mjs";
+import { makeAlignedFloat32Array } from "../util.mjs";
 
 export let compContainer = (store: { position: V3 }, resources: Record<string, GPUTexture>): LagopusElement => {
   return group(
@@ -58,9 +60,9 @@ export let compContainer = (store: { position: V3 }, resources: Record<string, G
         { field: "color", format: "float32x4" },
       ],
       data: [
-        { position: [120.0, 120.0, 30, 1], color: [1, 0, 0, 1] },
-        { position: [128.0, 120.0, 30, 1], color: [1, 0, 0, 1] },
-        { position: [120.0, 126.0, 38, 1], color: [1, 0, 0, 1] },
+        { position: [100.0, 180.0, 0, 1], color: [1, 0, 0, 1] },
+        { position: [108.0, 180.0, 0, 1], color: [0, 1, 0, 1] },
+        { position: [100.0, 188.0, 8, 1], color: [0, 0, 1, 1] },
       ],
       hitRegion: {
         radius: 4,
@@ -136,6 +138,37 @@ export let compContainer = (store: { position: V3 }, resources: Record<string, G
         { position: [120.0, 160.0, 30, 1], uv: [0, 0] },
         { position: [200.0, 160.0, 30, 1], uv: [1, 0] },
       ],
+    }),
+    // compute shader example
+    object({
+      label: "triangle-compute",
+      shader: triangleComputeWgsl,
+      topology: "triangle-list",
+      attrsList: [
+        { field: "position", format: "float32x4" },
+        { field: "color", format: "float32x4" },
+        { field: "pointer", format: "uint32" },
+      ],
+      data: [
+        { position: [60.0, -200.0, 0, 1], color: [1, 0, 0, 1], pointer: 0 },
+        { position: [68.0, -200.0, 0, 1], color: [0, 1, 0, 1], pointer: 0 },
+        { position: [60.0, -208.0, 8, 1], color: [0, 0, 1, 1], pointer: 0 },
+        // another triangle
+        { position: [100.0, -200.0, 0, 1], color: [1, 0, 0, 1], pointer: 0 },
+        { position: [108.0, -200.0, 0, 1], color: [0, 1, 0, 1], pointer: 0 },
+        { position: [100.0, -208.0, 8, 1], color: [0, 0, 1, 1], pointer: 0 },
+      ],
+      computeOptions: {
+        particleCount: 2,
+        initialBuffer: makeAlignedFloat32Array(
+          // item 1, position, velocity
+          [0, 0, 0],
+          [1, 1, 1],
+          // item 2, position, velocity
+          [0, 0, 0],
+          [1, 1, 1]
+        ),
+      },
     })
   );
 };

@@ -18,8 +18,13 @@ export let object = (options: LagopusObjectOptions): LagopusObjectData => {
     var pointer = 0;
     for (let i = 0; i < data.length; i++) {
       let v = data[i][attr.field];
-      for (let j = 0; j < v.length; j++) {
-        buffer[pointer] = v[j];
+      if (Array.isArray(v)) {
+        for (let j = 0; j < v.length; j++) {
+          buffer[pointer] = v[j];
+          pointer += 1;
+        }
+      } else {
+        buffer[pointer] = v;
         pointer += 1;
       }
     }
@@ -44,7 +49,8 @@ export let object = (options: LagopusObjectOptions): LagopusObjectData => {
     indices,
     getParams,
     options.textures,
-    options.label || "default"
+    options.label || "default",
+    options.computeOptions
   );
 };
 

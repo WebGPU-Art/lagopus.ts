@@ -1,4 +1,4 @@
-import { LagopusAttribute, LagopusElement, LagopusHitRegion, LagopusObjectData } from "./primes.mjs";
+import { ComputeOptions, LagopusAttribute, LagopusElement, LagopusHitRegion, LagopusObjectData } from "./primes.mjs";
 
 import { createBuffer, readFormatSize } from "./util.mjs";
 import { atomDevice, atomLagopusTree, atomProxiedDispatch, atomObjectsTree } from "./global.mjs";
@@ -15,13 +15,14 @@ export let createRenderer = (
   indices: Uint32Array,
   getParams: () => number[],
   textures: GPUTexture[],
-  label: string
+  label: string,
+  computeOptions?: ComputeOptions
 ): LagopusObjectData => {
   // load shared device
   let device = atomDevice.deref();
 
-  let vertexBuffers = vertices.map((v) => createBuffer(v, GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST));
-  let indicesBuffer = indices ? createBuffer(indices, GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST) : null;
+  let vertexBuffers = vertices.map((v) => createBuffer(v, GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, "vertex"));
+  let indicesBuffer = indices ? createBuffer(indices, GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST, "index") : null;
 
   const vertexBuffersDescriptors = attrsList.map((info, idx) => {
     let stride = readFormatSize(info.format);
@@ -55,6 +56,7 @@ export let createRenderer = (
     getParams,
     textures,
     label,
+    computeOptions,
   };
 };
 
