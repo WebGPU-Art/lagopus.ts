@@ -23,7 +23,6 @@ export var atomBufferNeedClear: Atom<boolean> = new Atom(true);
 export var atomClearColor: Atom<{ r: number; g: number; b: number; a: number }> = new Atom(undefined);
 
 export var atomLagopusTree: Atom<LagopusRenderObject> = new Atom(null);
-/** TODO merge */
 export let atomObjectsTree = new Atom<LagopusRenderObject>(null);
 
 // proxy it for hot reloading

@@ -36,8 +36,8 @@ export let makePainter = (info: LagopusObjectData): ((l: number) => void) => {
   let renderParticlesBindGroupLayout = device.createBindGroupLayout({
     label: info.label + "@render-uniform",
     entries: [
-      { binding: 0, visibility: GPUShaderStage.VERTEX, buffer: { type: "read-only-storage" } },
-      { binding: 1, visibility: GPUShaderStage.VERTEX, buffer: { type: "read-only-storage" } },
+      { binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: "read-only-storage" } },
+      { binding: 1, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: "read-only-storage" } },
     ],
   });
 
@@ -61,8 +61,8 @@ export let makePainter = (info: LagopusObjectData): ((l: number) => void) => {
   let renderParticlesLayout = device.createBindGroupLayout({
     label: info.label + "@render-particles",
     entries: [
-      { binding: 0, visibility: GPUShaderStage.VERTEX, buffer: { type: "read-only-storage" } },
-      { binding: 1, visibility: GPUShaderStage.VERTEX, buffer: { type: "read-only-storage" } },
+      { binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: "read-only-storage" } },
+      { binding: 1, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: "read-only-storage" } },
     ],
   });
 
@@ -118,8 +118,8 @@ export let makePainter = (info: LagopusObjectData): ((l: number) => void) => {
   let renderUniformBindGroupLayout = device.createBindGroupLayout({
     label: info.label + "@render-uniform",
     entries: [
-      { binding: 0, visibility: GPUShaderStage.VERTEX, buffer: { type: "uniform" } },
-      { binding: 1, visibility: GPUShaderStage.VERTEX, buffer: { type: "uniform" } },
+      { binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: "uniform" } },
+      { binding: 1, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: "uniform" } },
     ],
   });
 
