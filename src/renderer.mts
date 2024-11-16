@@ -1,8 +1,8 @@
-import { ComputeOptions, LagopusAttribute, LagopusElement, LagopusHitRegion, LagopusObjectData } from "./primes.mjs";
+import { ComputeOptions, LagopusAttribute, LagopusElement, LagopusHitRegion, LagopusObjectData, LagopusRenderer } from "./primes.mjs";
 
 import { createBuffer, readFormatSize } from "./util.mjs";
 import { atomDevice, atomLagopusTree, atomProxiedDispatch, atomObjectsTree } from "./global.mjs";
-import { paintLagopusTree } from "./paint.mjs";
+import { makePainter, paintLagopusTree } from "./paint.mjs";
 
 /** prepare vertex buffer from object */
 export let createRenderer = (
@@ -17,7 +17,7 @@ export let createRenderer = (
   textures: GPUTexture[],
   label: string,
   computeOptions?: ComputeOptions
-): LagopusObjectData => {
+): LagopusRenderer => {
   // load shared device
   let device = atomDevice.deref();
 
@@ -46,22 +46,25 @@ export let createRenderer = (
 
   return {
     type: "object",
-    topology: topology,
-    shaderModule: shaderModule,
-    vertexBuffersDescriptors: vertexBuffersDescriptors,
-    vertexBuffers,
-    length: verticesLength,
-    hitRegion: hitRegion,
-    indices: indicesBuffer,
-    getParams,
-    textures,
-    label,
-    computeOptions,
+    renderer: makePainter({
+      type: "object",
+      topology: topology,
+      shaderModule: shaderModule,
+      vertexBuffersDescriptors: vertexBuffersDescriptors,
+      vertexBuffers,
+      length: verticesLength,
+      hitRegion: hitRegion,
+      indices: indicesBuffer,
+      getParams,
+      textures,
+      label,
+      computeOptions,
+    }),
   };
 };
 
 /** track tree, internally it calls `paintLagopusTree` to render */
-export function renderLagopusTree(tree: LagopusElement, dispatch: (op: any, data: any) => void) {
+export function renderLagopusTree(tree: LagopusRenderer, dispatch: (op: any, data: any) => void) {
   atomLagopusTree.reset(tree);
   atomProxiedDispatch.reset(dispatch);
   atomObjectsTree.reset(tree);

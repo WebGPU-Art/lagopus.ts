@@ -34,7 +34,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID: vec3<u32>) {
   var index = GlobalInvocationID.x;
   let input_item = input.particles[index];
 
-  output.particles[index].position = input_item.position + vec3(1.1, 0.01, 0.02);
+  output.particles[index].position = input_item.position + 0.2 * input_item.velocity;
   // TODO
 }
 
@@ -92,7 +92,7 @@ fn vertex_main(
   let base = input.particles[pointer].position;
 
   var output: VertexOut;
-  let p = transform_perspective(position.xyz).pointPosition + vec3(base[0], base[1], base[2]);
+  let p = transform_perspective(position.xyz + base).pointPosition;
   let scale: f32 = 0.002;
   output.position = vec4(p[0] * scale, p[1] * scale, p[2] * scale, 1.0);
   // output.position = position;

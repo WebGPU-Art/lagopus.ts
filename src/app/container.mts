@@ -4,11 +4,11 @@ import blinkWgsl from "../../shaders/blink.wgsl";
 import triangleComputeWgsl from "../../shaders/triangle-compute.wgsl";
 
 import { flattenData, group, object } from "../alias.mjs";
-import { LagopusElement, V3 } from "../primes.mjs";
+import { LagopusElement, LagopusRenderer, V3 } from "../primes.mjs";
 import { compButton, compSlider, compDragPoint, compFlatButton } from "../comp/button.mjs";
 import { makeAlignedFloat32Array } from "../util.mjs";
 
-export let compContainer = (store: { position: V3 }, resources: Record<string, GPUTexture>): LagopusElement => {
+export let compContainer = (store: { position: V3 }, resources: Record<string, GPUTexture>): LagopusRenderer => {
   return group(
     null,
     object({
@@ -154,19 +154,19 @@ export let compContainer = (store: { position: V3 }, resources: Record<string, G
         { position: [68.0, -200.0, 0, 1], color: [0, 1, 0, 1], pointer: 0 },
         { position: [60.0, -208.0, 8, 1], color: [0, 0, 1, 1], pointer: 0 },
         // another triangle
-        { position: [100.0, -200.0, 0, 1], color: [1, 0, 0, 1], pointer: 0 },
-        { position: [108.0, -200.0, 0, 1], color: [0, 1, 0, 1], pointer: 0 },
-        { position: [100.0, -208.0, 8, 1], color: [0, 0, 1, 1], pointer: 0 },
+        { position: [100.0, -200.0, 0, 1], color: [1, 0, 0, 1], pointer: 1 },
+        { position: [108.0, -200.0, 0, 1], color: [0, 1, 0, 1], pointer: 1 },
+        { position: [100.0, -208.0, 8, 1], color: [0, 0, 1, 1], pointer: 1 },
       ],
       computeOptions: {
         particleCount: 2,
         initialBuffer: makeAlignedFloat32Array(
           // item 1, position, velocity
           [0, 0, 0],
-          [1, 1, 1],
+          [1, 0, 0],
           // item 2, position, velocity
           [0, 0, 0],
-          [1, 1, 1]
+          [0, 1, 0]
         ),
       },
     })
