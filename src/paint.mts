@@ -31,7 +31,6 @@ export let makePainter = (info: LagopusObjectData): ((l: number) => void) => {
 
   let device = atomDevice.deref();
   let context = atomContext.deref();
-  let depthTexture = atomDepthTexture.deref();
 
   let renderParticlesBindGroupLayout = device.createBindGroupLayout({
     label: info.label + "@render-uniform",
@@ -188,6 +187,8 @@ export let makePainter = (info: LagopusObjectData): ((l: number) => void) => {
     let needClear = atomBufferNeedClear.deref();
     let loadOp: GPULoadOp = needClear ? "clear" : "load";
     let clearValue = atomClearColor.deref() ?? { r: 0.0, g: 0.0, b: 0.0, a: 1.0 };
+
+    let depthTexture = atomDepthTexture.deref();
 
     let view = atomBloomEnabled.deref() ? atomCanvasTexture.deref().createView() : context.getCurrentTexture().createView();
     // resolveTarget: atomBloomEnabled.deref() ? undefined : context.getCurrentTexture().createView(),
