@@ -59,29 +59,49 @@ export const createBuffer = (arr: Float32Array | Uint32Array, usage: number, lab
 // if size of data is larger than 2, its start position should be aligned to 4 bytes
 // this algorithm may not be accurate, but enough for my case
 export let makeAlignedFloat32Array = (...data: (number | number[])[]): Float32Array => {
-  let result: number[] = [];
+  let counted = 0;
   for (let d of data) {
     if (Array.isArray(d)) {
       let size = d.length;
       if (size < 2) {
-        result.push(d[0]);
-      } else if (size < 4) {
-        while (result.length % 2) {
-          result.push(0);
-        }
-        result.push(...d);
+        //
+      } else if (size < 3) {
+        counted = (counted + 1) & ~1;
       } else {
-        while (result.length % 4) {
-          result.push(0);
-        }
-        result.push(...d);
+        counted = (counted + 3) & ~3;
       }
+      counted += size;
     } else {
-      result.push(d);
+      counted += 1;
     }
   }
-  while (result.length % 4) {
-    result.push(0);
+  while (counted % 4) {
+    counted += 1;
   }
-  return new Float32Array(result);
+
+  // predeclare the result array for performance
+  let result = new Float32Array(counted);
+
+  // count again
+  counted = 0;
+  for (let d of data) {
+    if (Array.isArray(d)) {
+      let size = d.length;
+      if (size < 2) {
+        result.set(d, counted);
+      } else if (size < 3) {
+        counted = (counted + 1) & ~1;
+        result.set(d, counted);
+      } else {
+        counted = (counted + 3) & ~3;
+        result.set(d, counted);
+      }
+      counted += size;
+    } else {
+      result[counted] = d;
+      counted += 1;
+    }
+  }
+
+  return result;
 };
