@@ -6,7 +6,6 @@ import {
   atomBufferNeedClear,
   atomClearColor,
   atomCanvasTexture,
-  atomCommandEncoder,
   atomBloomEnabled,
   atomLagopusTree,
 } from "./global.mjs";
@@ -24,8 +23,8 @@ let blendState: GPUBlendState = {
   color: { srcFactor: "src-alpha", dstFactor: "one-minus-src-alpha", operation: "add" },
   alpha: { srcFactor: "one", dstFactor: "one-minus-src-alpha", operation: "add" },
 };
-export let makePainter = (info: LagopusObjectData): ((l: number) => void) => {
-  let { topology, shaderModule, vertexBuffersDescriptors, vertexBuffers, indices } = info;
+export let makePainter = (info: LagopusObjectData): ((l: number, b: GPUCommandEncoder) => void) => {
+  let { topology, shaderModule, vertexBuffersDescriptors, vertexBuffers } = info;
   let { computeOptions } = info;
 
   let device = atomDevice.deref();
@@ -114,7 +113,8 @@ export let makePainter = (info: LagopusObjectData): ((l: number) => void) => {
   // Create render pass descriptor
   //
 
-  let texturesInfo = prepareTextures(device, info.textures, info.label);
+  /** not useful without bloom effect enabled */
+  let texturesInfo = info.textures ? prepareTextures(device, info.textures, info.label) : undefined;
 
   let renderUniformBindGroupLayout = device.createBindGroupLayout({
     label: info.label + "@render-uniform",
@@ -128,7 +128,11 @@ export let makePainter = (info: LagopusObjectData): ((l: number) => void) => {
     label: info.label + "@render",
     layout: device.createPipelineLayout({
       label: info.label + "@render",
-      bindGroupLayouts: [renderUniformBindGroupLayout, texturesInfo.layout, computeOptions ? renderParticlesLayout : undefined].filter(Boolean),
+      bindGroupLayouts: [
+        renderUniformBindGroupLayout,
+        info.textures ? texturesInfo.layout : undefined,
+        computeOptions ? renderParticlesLayout : undefined,
+      ].filter(Boolean),
     }),
     vertex: { module: shaderModule, entryPoint: "vertex_main", buffers: vertexBuffersDescriptors },
     fragment: { module: shaderModule, entryPoint: "fragment_main", targets: [{ format: presentationFormat, blend: blendState }] },
@@ -139,7 +143,7 @@ export let makePainter = (info: LagopusObjectData): ((l: number) => void) => {
 
   // Encode render pass
 
-  return (loopTimes) => {
+  return (loopTimes, commandEncoder) => {
     // create uniforms
     // based on code from https://alain.xyz/blog/raw-webgpu
 
@@ -162,8 +166,6 @@ export let makePainter = (info: LagopusObjectData): ((l: number) => void) => {
       { binding: 0, resource: { buffer: uniformBuffer } },
       { binding: 1, resource: { buffer: customParamsBuffer } },
     ];
-
-    const commandEncoder = atomCommandEncoder.deref();
 
     // now compute
     if (computeOptions) {
@@ -218,7 +220,7 @@ export let makePainter = (info: LagopusObjectData): ((l: number) => void) => {
 
     renderEncoder.setPipeline(renderPipeline);
     renderEncoder.setBindGroup(0, renderUniformBindGroup);
-    if (texturesInfo.bindGroup) {
+    if (info.textures) {
       // occupies 1 for texture
       renderEncoder.setBindGroup(1, texturesInfo.bindGroup);
     }
@@ -234,23 +236,23 @@ export let makePainter = (info: LagopusObjectData): ((l: number) => void) => {
       renderEncoder.setVertexBuffer(idx, vertexBuffer);
     });
 
-    if (indices) {
+    if (info.indices) {
       // just use uint32, skip uint16
-      renderEncoder.setIndexBuffer(indices, "uint32");
-      renderEncoder.drawIndexed(indices.size / 4);
+      renderEncoder.setIndexBuffer(info.indices, "uint32");
+      renderEncoder.drawIndexed(info.indicesCount);
     } else {
-      renderEncoder.draw(info.length);
+      renderEncoder.draw(info.verticesLength);
     }
     renderEncoder.end();
   };
 };
 
-export let triggerRendering = (t: number, el: LagopusRenderObject) => {
+export let callTreeRenderers = (t: number, c: GPUCommandEncoder, el: LagopusRenderObject) => {
   if (el == null) return;
   if (el.type === "object") {
-    el.renderer(t);
+    el.renderer(t, c);
   } else {
-    el.children.forEach((child) => triggerRendering(t, child));
+    el.children.forEach((child) => callTreeRenderers(t, c, child));
   }
 };
 
@@ -259,20 +261,19 @@ let counter = 0;
 /** send command buffer to device and render */
 export function paintLagopusTree() {
   let device = atomDevice.deref();
-  atomCommandEncoder.reset(device.createCommandEncoder({ label: "lagopus shared" }));
+  let commandEncoder = device.createCommandEncoder({ label: "lagopus shared" });
 
   atomBufferNeedClear.reset(true);
   let tree = atomLagopusTree.deref();
-  triggerRendering(counter, tree);
+  callTreeRenderers(counter, commandEncoder, tree);
   counter += 1;
 
   if (atomBufferNeedClear.deref()) {
-    clearCanvas();
+    clearCanvas(commandEncoder);
   } else if (atomBloomEnabled.deref()) {
-    postRendering();
+    postRendering(commandEncoder);
   }
   // load shared device
-  let commandEncoder = atomCommandEncoder.deref();
   device.queue.submit([commandEncoder.finish()]);
 }
 

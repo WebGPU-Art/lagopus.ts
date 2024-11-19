@@ -2,17 +2,7 @@ import fullscreenWgsl from "../shaders/fullscreen.wgsl";
 import blurWGSL from "../shaders/blur.wgsl";
 import screenFilterWgsl from "../shaders/screen-filter.wgsl";
 
-import {
-  atomContext,
-  atomDevice,
-  atomCanvasTexture,
-  atomCommandEncoder,
-  atomPingBuffer,
-  atomPongBuffer,
-  atomFilterTexture,
-  atomPingTexture,
-  atomPongTexture,
-} from "./global.mjs";
+import { atomContext, atomDevice, atomCanvasTexture, atomPingBuffer, atomPongBuffer, atomFilterTexture, atomPingTexture, atomPongTexture } from "./global.mjs";
 
 /** based on code https://webgpu.github.io/webgpu-samples/?sample=imageBlur#fullscreenTexturedQuad.wgsl */
 export function prepareTextures(device: GPUDevice, textures: GPUTexture[], label: string) {
@@ -69,7 +59,7 @@ export function prepareTextures(device: GPUDevice, textures: GPUTexture[], label
 }
 
 /** was an experimental feature that is not enabled */
-export function postRendering() {
+export function postRendering(commandEncoder: GPUCommandEncoder) {
   let canvasTexture = atomCanvasTexture.deref();
   let device = atomDevice.deref();
   let context = atomContext.deref();
@@ -81,7 +71,6 @@ export function postRendering() {
     minFilter: "linear",
   });
   const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
-  const commandEncoder = atomCommandEncoder.deref();
 
   let pingTexture = atomPingTexture.deref();
   let pongTexture = atomPongTexture.deref();

@@ -33,8 +33,6 @@ export var atomMouseHoldingPaths = new Atom<number[][]>([]);
 
 export let atomObjectsBuffer = new Atom<LagopusObjectBuffer[]>([]);
 
-export let atomCommandEncoder = new Atom<GPUCommandEncoder>(null);
-
 export function wLog<T extends any>(message: string, a: T): T {
   console.warn(message, a);
   return a;

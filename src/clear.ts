@@ -1,4 +1,4 @@
-import { atomClearColor, atomCommandEncoder, atomContext, atomDevice } from "./global.mjs";
+import { atomClearColor, atomContext, atomDevice } from "./global.mjs";
 
 /** renders on lya single point, which consists no triangle */
 let triangleWgsl = `
@@ -23,10 +23,9 @@ fn main_frag() -> @location(0) vec4<f32> {
 /** when no command is emitted in a render pass, we need to clear canvas since nothing is re-draw.
  * used in hot swapping.
  */
-export let clearCanvas = () => {
+export let clearCanvas = (commandEncoder: GPUCommandEncoder) => {
   let device = atomDevice.deref();
   let context = atomContext.deref();
-  const commandEncoder = atomCommandEncoder.deref();
   const presentationFormat = window.navigator.gpu.getPreferredCanvasFormat();
 
   const pipeline = device.createRenderPipeline({

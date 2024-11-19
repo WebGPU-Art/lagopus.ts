@@ -25,10 +25,8 @@ export let object = (options: LagopusObjectOptions): LagopusRenderObject => {
         if (pointer + v.length > buffer.length) {
           throw new Error(`Buffer overflow: trying to write ${v.length} elements at position ${pointer} in buffer of length ${buffer.length}`);
         }
-        for (let j = 0; j < v.length; j++) {
-          buffer[pointer] = v[j];
-          pointer += 1;
-        }
+        buffer.set(v, pointer);
+        pointer += v.length;
       } else {
         if (pointer >= buffer.length) {
           throw new Error(`Buffer overflow: trying to write at position ${pointer} in buffer of length ${buffer.length}`);
@@ -46,21 +44,19 @@ export let object = (options: LagopusObjectOptions): LagopusRenderObject => {
     indices = u32buffer(options.indices);
   }
 
-  let getParams = options.getParams || options.addUniform;
-
-  return createRenderer(
-    options.shader,
-    options.topology,
-    options.attrsList,
-    data.length,
-    buffers,
-    options.hitRegion,
-    indices,
-    getParams,
-    options.textures,
-    options.label || "default",
-    options.computeOptions
-  );
+  return createRenderer({
+    shader: options.shader,
+    topology: options.topology,
+    attrsList: options.attrsList,
+    verticesLength: data.length,
+    vertices: buffers,
+    hitRegion: options.hitRegion,
+    indices: indices,
+    getParams: options.getParams,
+    textures: options.textures,
+    label: options.label || "lagopus-object",
+    computeOptions: options.computeOptions,
+  });
 };
 
 export type NestedData<T> = NestedData<T>[] | T;

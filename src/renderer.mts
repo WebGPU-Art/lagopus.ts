@@ -5,26 +5,26 @@ import { atomDevice, atomProxiedDispatch, atomLagopusTree } from "./global.mjs";
 import { makePainter } from "./paint.mjs";
 
 /** prepare vertex buffer from object */
-export let createRenderer = (
-  shaderCode: string,
-  topology: GPUPrimitiveTopology,
-  attrsList: LagopusAttribute[],
-  verticesLength: number,
-  vertices: (Float32Array | Uint32Array)[],
-  hitRegion: LagopusHitRegion,
-  indices: Uint32Array,
-  getParams: () => number[],
-  textures: GPUTexture[],
-  label: string,
-  computeOptions?: ComputeOptions
-): LagopusRenderObject => {
+export let createRenderer = (options: {
+  shader: string;
+  topology: GPUPrimitiveTopology;
+  attrsList: LagopusAttribute[];
+  verticesLength: number;
+  vertices: (Float32Array | Uint32Array)[];
+  hitRegion: LagopusHitRegion;
+  indices: Uint32Array;
+  getParams: () => number[];
+  textures: GPUTexture[];
+  label: string;
+  computeOptions?: ComputeOptions;
+}): LagopusRenderObject => {
   // load shared device
   let device = atomDevice.deref();
 
-  let vertexBuffers = vertices.map((v) => createBuffer(v, GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, "vertex"));
-  let indicesBuffer = indices ? createBuffer(indices, GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST, "index") : null;
+  let vertexBuffers = options.vertices.map((v) => createBuffer(v, GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST, "vertex"));
+  let indicesBuffer = options.indices ? createBuffer(options.indices, GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST, "index") : null;
 
-  const vertexBuffersDescriptors = attrsList.map((info, idx) => {
+  const vertexBuffersDescriptors = options.attrsList.map((info, idx) => {
     let stride = readFormatSize(info.format);
     return {
       attributes: [{ shaderLocation: idx, offset: 0, format: info.format }],
@@ -35,31 +35,32 @@ export let createRenderer = (
 
   // ~~ DEFINE BASIC SHADERS ~~
   const shaderModule = device.createShaderModule({
-    label,
-    code: shaderCode,
+    label: options.label,
+    code: options.shader,
   });
 
   shaderModule.getCompilationInfo().then((e) => {
     // a dirty hook to expose build messages
-    globalThis.__lagopusHandleCompilationInfo?.(e, shaderCode);
+    globalThis.__lagopusHandleCompilationInfo?.(e, options.shader);
   });
 
   return {
     type: "object",
-    hitRegion,
+    hitRegion: options.hitRegion,
     renderer: makePainter({
       type: "object",
-      topology: topology,
+      topology: options.topology,
       shaderModule: shaderModule,
-      vertexBuffersDescriptors: vertexBuffersDescriptors,
+      vertexBuffersDescriptors,
       vertexBuffers,
-      length: verticesLength,
-      hitRegion: hitRegion,
+      verticesLength: options.verticesLength,
+      hitRegion: options.hitRegion,
       indices: indicesBuffer,
-      getParams,
-      textures,
-      label,
-      computeOptions,
+      indicesCount: options.indices ? options.indices.length : 0,
+      getParams: options.getParams,
+      textures: options.textures,
+      label: options.label,
+      computeOptions: options.computeOptions,
     }),
   };
 };

@@ -27,8 +27,6 @@ export interface LagopusObjectOptions {
   hitRegion?: LagopusHitRegion;
   indices?: number[];
   getParams?: () => number[];
-  /** @deprecated use `getParams` now */
-  addUniform?: () => number[];
   textures?: GPUTexture[];
   computeOptions?: ComputeOptions;
 }
@@ -39,9 +37,10 @@ export interface LagopusObjectData {
   vertexBuffersDescriptors: Iterable<GPUVertexBufferLayout | null>;
   shaderModule: GPUShaderModule;
   vertexBuffers: GPUBuffer[];
-  length: number;
+  verticesLength: number;
   hitRegion?: LagopusHitRegion;
   indices?: GPUBuffer;
+  indicesCount?: number;
   getParams?: () => number[];
   textures?: GPUTexture[];
   label: string;
@@ -50,7 +49,7 @@ export interface LagopusObjectData {
 
 export interface LagopusRenderObject {
   type: "object" | "group";
-  renderer?: (t: number) => void;
+  renderer?: (t: number, c: GPUCommandEncoder) => void;
   children?: LagopusRenderObject[];
   hitRegion?: LagopusHitRegion;
 }
