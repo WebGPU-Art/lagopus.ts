@@ -106,14 +106,7 @@ export let compDragPoint = (
     let lookDistance = newLookatPoint();
     let upward = atomViewerUpward.deref();
     let rightward = vScale(vCross(upward, atomViewerForward.deref()), -1);
-    let s = coneBackScale;
-    let r =
-      vDot(vSub(position, atomViewerPosition.deref()), lookDistance) /
-      (Math.pow(lookDistance[0], 2) + Math.pow(lookDistance[1], 2) + Math.pow(lookDistance[2], 2));
-    let scaleRadio = window.innerWidth * 0.002 * 0.5;
-    let screenScale = (r + s) / (s + 1);
-    let scale = 1 / atomViewerScale.deref();
-    onMove(vAdd(position, vScale(vAdd(vScale(rightward, dx), vScale(upward, dy)), (screenScale / scaleRadio) * scale)), d);
+    onMove(vAdd(position, vScale(vAdd(vScale(rightward, dx), vScale(upward, dy)), calculateDragScale(position, lookDistance, coneBackScale))), d);
   };
   return object({
     label: "drag-point",
@@ -151,6 +144,15 @@ export let compDragPoint = (
     })),
   });
 };
+
+function calculateDragScale(position: V3, lookDistance: V3, s: number): number {
+  const r =
+    vDot(vSub(position, atomViewerPosition.deref()), lookDistance) /
+    (Math.pow(lookDistance[0], 2) + Math.pow(lookDistance[1], 2) + Math.pow(lookDistance[2], 2));
+  const scaleRadio = window.innerWidth * 0.002 * 0.5;
+  const screenScale = (r + s) / (s + 1);
+  return (screenScale / scaleRadio) * (1 / atomViewerScale.deref());
+}
 
 export let compButton = (
   props: {

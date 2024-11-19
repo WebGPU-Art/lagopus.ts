@@ -1,5 +1,5 @@
 import { createRenderer } from "./renderer.mjs";
-import { LagopusObjectData, LagopusObjectOptions, LagopusGroup, LagopusRenderObject } from "./primes.mjs";
+import { LagopusObjectOptions, LagopusRenderObject } from "./primes.mjs";
 
 export let group = (options: any, ...children: any[]): LagopusRenderObject => {
   return {
@@ -8,7 +8,10 @@ export let group = (options: any, ...children: any[]): LagopusRenderObject => {
   };
 };
 
-/** create a render object */
+/**
+ * @param options.label - Identifier for the renderer (defaults to "default")
+ * @param options.computeOptions - Configuration for compute shader operations
+ */
 export let object = (options: LagopusObjectOptions): LagopusRenderObject => {
   let { attrsList, data } = options;
 
@@ -19,11 +22,17 @@ export let object = (options: LagopusObjectOptions): LagopusRenderObject => {
     for (let i = 0; i < data.length; i++) {
       let v = data[i][attr.field];
       if (Array.isArray(v)) {
+        if (pointer + v.length > buffer.length) {
+          throw new Error(`Buffer overflow: trying to write ${v.length} elements at position ${pointer} in buffer of length ${buffer.length}`);
+        }
         for (let j = 0; j < v.length; j++) {
           buffer[pointer] = v[j];
           pointer += 1;
         }
       } else {
+        if (pointer >= buffer.length) {
+          throw new Error(`Buffer overflow: trying to write at position ${pointer} in buffer of length ${buffer.length}`);
+        }
         buffer[pointer] = v;
         pointer += 1;
       }

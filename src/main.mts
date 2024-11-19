@@ -33,6 +33,7 @@ function renderApp() {
   let tree = compContainer(store.deref(), resources);
 
   renderLagopusTree(tree, dispatch);
+  paintLagopusTree();
 }
 
 let loadTextures = async (device: GPUDevice) => {

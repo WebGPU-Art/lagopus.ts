@@ -4,7 +4,7 @@ struct UBO {
   look_distance: f32,
   scale: f32,
   forward: vec3f,
-  // direction up overhead, better unit vector
+  // Upward direction unit vector for camera orientation
   upward: vec3f,
   rightward: vec3f,
   camera_position: vec3f,
@@ -32,10 +32,10 @@ struct Particles {
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) GlobalInvocationID: vec3<u32>) {
   var index = GlobalInvocationID.x;
-  let input_item = input.particles[index];
-
-  output.particles[index].position = input_item.position + 0.2 * input_item.velocity;
-  // TODO
+  if index < arrayLength(&input.particles) {
+    let input_item = input.particles[index];
+    output.particles[index].position = input_item.position + 0.2 * input_item.velocity;
+  }
 }
 
 // perspective
@@ -91,12 +91,12 @@ fn vertex_main(
 
   let base = input.particles[pointer].position;
 
-  var output: VertexOut;
   let p = transform_perspective(position.xyz + base).pointPosition;
   let scale: f32 = 0.002;
-  output.position = vec4(p[0] * scale, p[1] * scale, p[2] * scale, 1.0);
-  // output.position = position;
-  output.color = color;
+  var output: VertexOut = VertexOut(
+    vec4(p.xyz * scale, 1.0),
+    color
+  );
   return output;
 }
 

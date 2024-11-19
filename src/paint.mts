@@ -18,7 +18,6 @@ import { clearCanvas } from "./clear";
 import { postRendering, prepareTextures } from "./post-rendering.mjs";
 import { createBuffer, makeAlignedFloat32Array } from "./util.mjs";
 
-// TODO need to learn more details
 // https://github.com/takahirox/webgpu-trial/blob/master/cube_alpha_blend.html#L273
 // https://github.com/kdashg/webgpu-js/blob/master/hello-blend.html#L98
 let blendState: GPUBlendState = {
@@ -66,13 +65,16 @@ export let makePainter = (info: LagopusObjectData): ((l: number) => void) => {
   });
 
   // prepare variables for usages in closure
-  var uniformsComputeLayout: GPUBindGroupLayout;
-  var computePipeline: GPUComputePipeline;
-  var computeParticleBindGroups: GPUBindGroup[];
+  let uniformsComputeLayout: GPUBindGroupLayout;
+  let computePipeline: GPUComputePipeline;
+  let computeParticleBindGroups: GPUBindGroup[];
 
   let particleBindGroups = mockEmptyParticlesBindGroups(device, renderParticlesBindGroupLayout);
 
   if (computeOptions) {
+    if (!computeOptions.initialBuffer) {
+      throw new Error("computeOptions.initialBuffer is undefined");
+    }
     const particleBuffers: GPUBuffer[] = new Array(2);
     for (let i = 0; i < 2; ++i) {
       particleBuffers[i] = device.createBuffer({
@@ -145,7 +147,7 @@ export let makePainter = (info: LagopusObjectData): ((l: number) => void) => {
     let lookDistance = vLength(lookAt);
     let forward = vNormalize(lookAt);
     let upward = atomViewerUpward.deref();
-    let rightward = vCross(forward, atomViewerUpward.deref());
+    let rightward = vCross(forward, upward);
     let viewportRatio = window.innerHeight / window.innerWidth;
     let viewerScale = atomViewerScale.deref();
     let viewerPosition = atomViewerPosition.deref();
@@ -155,7 +157,6 @@ export let makePainter = (info: LagopusObjectData): ((l: number) => void) => {
 
     let uniformBuffer = createBuffer(uniformData, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, "uniform");
     let customParamsBuffer = createBuffer(customParams, GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, "params");
-    // console.log(info.getParams?.(), uniformData.length, uniformBuffer);
 
     let uniformEntries: GPUBindGroupEntry[] = [
       { binding: 0, resource: { buffer: uniformBuffer } },
@@ -298,15 +299,14 @@ let setupParticlesBindGroups = (device: GPUDevice, layout: GPUBindGroupLayout, p
 export let mockEmptyParticlesBindGroups = (device: GPUDevice, layout: GPUBindGroupLayout) => {
   const mockedBindGroups: GPUBindGroup[] = new Array(2);
 
+  let emptyBuffer = device.createBuffer({ label: "mock", size: 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.UNIFORM });
   for (let i = 0; i < 2; ++i) {
-    let emptyBuffer = device.createBuffer({ label: "mock", size: 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.UNIFORM });
-    let emptyBuffer2 = device.createBuffer({ label: "mock", size: 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.UNIFORM });
     mockedBindGroups[i] = device.createBindGroup({
       label: "mocked",
       layout: layout,
       entries: [
         { binding: 0, resource: { buffer: emptyBuffer, size: 4 } },
-        { binding: 1, resource: { buffer: emptyBuffer2, size: 4 } },
+        { binding: 1, resource: { buffer: emptyBuffer, size: 4 } },
       ],
     });
   }
