@@ -1,8 +1,8 @@
-import { ComputeOptions, LagopusAttribute, LagopusElement, LagopusHitRegion, LagopusObjectData, LagopusRenderObject } from "./primes.mjs";
+import { ComputeOptions, LagopusAttribute, LagopusHitRegion, LagopusRenderObject } from "./primes.mjs";
 
 import { createBuffer, readFormatSize } from "./util.mjs";
-import { atomDevice, atomLagopusTree, atomProxiedDispatch, atomObjectsTree } from "./global.mjs";
-import { makePainter, paintLagopusTree } from "./paint.mjs";
+import { atomDevice, atomProxiedDispatch, atomLagopusTree } from "./global.mjs";
+import { makePainter } from "./paint.mjs";
 
 /** prepare vertex buffer from object */
 export let createRenderer = (
@@ -66,9 +66,8 @@ export let createRenderer = (
 
 /** track tree, internally it calls `paintLagopusTree` to render */
 export function renderLagopusTree(tree: LagopusRenderObject, dispatch: (op: any, data: any) => void) {
-  atomLagopusTree.reset(tree);
   atomProxiedDispatch.reset(dispatch);
-  atomObjectsTree.reset(tree);
+  atomLagopusTree.reset(tree);
 }
 
 export function resetCanvasSize(canvas: HTMLCanvasElement) {

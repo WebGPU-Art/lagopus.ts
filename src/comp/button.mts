@@ -2,7 +2,7 @@ import { object } from "../alias.mjs";
 import { vAdd, vCross, vDot, vScale, vSub } from "@triadica/touch-control";
 
 import { Atom } from "@triadica/touch-control";
-import { FnDispatch, V3, V2, LagopusObjectData, LagopusRenderObject } from "../primes.mjs";
+import { FnDispatch, V3, V2, LagopusRenderObject } from "../primes.mjs";
 
 let atomDragCache = new Atom<{ x: number; y: number }>({
   x: 0,

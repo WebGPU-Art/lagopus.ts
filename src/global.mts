@@ -1,4 +1,4 @@
-import { LagopusElement, LagopusObjectBuffer, LagopusRenderObject } from "./primes.mjs";
+import { LagopusObjectBuffer, LagopusRenderObject } from "./primes.mjs";
 import { Atom } from "@triadica/touch-control";
 
 export var atomDevice: Atom<GPUDevice> = new Atom(null);
@@ -22,8 +22,7 @@ export var atomBufferNeedClear: Atom<boolean> = new Atom(true);
 
 export var atomClearColor: Atom<{ r: number; g: number; b: number; a: number }> = new Atom(undefined);
 
-export var atomLagopusTree: Atom<LagopusRenderObject> = new Atom(null);
-export let atomObjectsTree = new Atom<LagopusRenderObject>(null);
+export let atomLagopusTree = new Atom<LagopusRenderObject>(null);
 
 // proxy it for hot reloading
 export let atomProxiedDispatch = new Atom<(op: string, data: any) => void>(null);

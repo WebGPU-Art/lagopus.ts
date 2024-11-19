@@ -1,4 +1,3 @@
-import queryString from "query-string";
 import { paintLagopusTree } from "./paint.mjs";
 import { renderLagopusTree, resetCanvasSize } from "./renderer.mjs";
 import { enableBloom, initializeCanvasTextures, initializeContext } from "./initialize.js";

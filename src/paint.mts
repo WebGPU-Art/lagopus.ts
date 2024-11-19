@@ -1,14 +1,14 @@
-import { LagopusElement, LagopusObjectData, LagopusRenderObject } from "./primes.mjs";
+import { LagopusObjectData, LagopusRenderObject } from "./primes.mjs";
 import {
   atomDepthTexture,
   atomContext,
   atomDevice,
   atomBufferNeedClear,
-  atomLagopusTree,
   atomClearColor,
   atomCanvasTexture,
   atomCommandEncoder,
   atomBloomEnabled,
+  atomLagopusTree,
 } from "./global.mjs";
 import { coneBackScale } from "./config.mjs";
 import { atomViewerPosition, atomViewerScale, atomViewerUpward, newLookatPoint } from "./perspective.mjs";
