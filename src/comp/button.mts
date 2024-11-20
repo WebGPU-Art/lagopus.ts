@@ -2,7 +2,7 @@ import { object } from "../alias.mjs";
 import { vAdd, vCross, vDot, vScale, vSub } from "@triadica/touch-control";
 
 import { Atom } from "@triadica/touch-control";
-import { FnDispatch, V3, V2, LagopusObjectData } from "../primes.mjs";
+import { FnDispatch, V3, V2, LagopusRenderObject } from "../primes.mjs";
 
 let atomDragCache = new Atom<{ x: number; y: number }>({
   x: 0,
@@ -23,7 +23,7 @@ export let compSlider = (
     color?: V3;
   },
   onMove: (delta: V2, dispatch: FnDispatch) => void
-): LagopusObjectData => {
+): LagopusRenderObject => {
   let { position } = props;
   let geo: V3[] = [
     [1, 0, 0],
@@ -85,7 +85,7 @@ export let compDragPoint = (
     color?: V3;
   },
   onMove: (p: V3, d: FnDispatch) => void
-): LagopusObjectData => {
+): LagopusRenderObject => {
   let position = props.position;
   let ignoreMoving = props.ignoreMoving ?? false;
   let geo: V3[] = [
@@ -106,14 +106,7 @@ export let compDragPoint = (
     let lookDistance = newLookatPoint();
     let upward = atomViewerUpward.deref();
     let rightward = vScale(vCross(upward, atomViewerForward.deref()), -1);
-    let s = coneBackScale;
-    let r =
-      vDot(vSub(position, atomViewerPosition.deref()), lookDistance) /
-      (Math.pow(lookDistance[0], 2) + Math.pow(lookDistance[1], 2) + Math.pow(lookDistance[2], 2));
-    let scaleRadio = window.innerWidth * 0.002 * 0.5;
-    let screenScale = (r + s) / (s + 1);
-    let scale = 1 / atomViewerScale.deref();
-    onMove(vAdd(position, vScale(vAdd(vScale(rightward, dx), vScale(upward, dy)), (screenScale / scaleRadio) * scale)), d);
+    onMove(vAdd(position, vScale(vAdd(vScale(rightward, dx), vScale(upward, dy)), calculateDragScale(position, lookDistance, coneBackScale))), d);
   };
   return object({
     label: "drag-point",
@@ -152,6 +145,15 @@ export let compDragPoint = (
   });
 };
 
+function calculateDragScale(position: V3, lookDistance: V3, s: number): number {
+  const r =
+    vDot(vSub(position, atomViewerPosition.deref()), lookDistance) /
+    (Math.pow(lookDistance[0], 2) + Math.pow(lookDistance[1], 2) + Math.pow(lookDistance[2], 2));
+  const scaleRadio = window.innerWidth * 0.002 * 0.5;
+  const screenScale = (r + s) / (s + 1);
+  return (screenScale / scaleRadio) * (1 / atomViewerScale.deref());
+}
+
 export let compButton = (
   props: {
     position: V3;
@@ -159,7 +161,7 @@ export let compButton = (
     color?: V3;
   },
   onClick: (e: MouseEvent, d: FnDispatch) => void
-): LagopusObjectData => {
+): LagopusRenderObject => {
   let position = props.position;
   let size = props.size ?? 20;
   let color = props.color ?? [0.6, 1, 0.56, 1.0];
@@ -201,7 +203,7 @@ export let compFlatButton = (
     color?: V3;
   },
   onClick: (e: MouseEvent, d: FnDispatch) => void
-): LagopusObjectData => {
+): LagopusRenderObject => {
   let position = props.position;
   let size = props.size ?? 20;
   let color = props.color ?? [0.6, 1, 0.56, 1.0];

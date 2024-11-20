@@ -1,7 +1,7 @@
 import { atomViewerScale, changeScaleBy, moveViewerBy, rotateGlanceBy, spinGlanceBy } from "./perspective.mjs";
 import { V2 } from "./primes.mjs";
 import { ControlStates } from "@triadica/touch-control";
-import { paintLagopusTree } from "./render.mjs";
+import { paintLagopusTree } from "./paint.mjs";
 import { setupGamepadControl } from "./gamepad";
 import { threshold } from "./config.mjs";
 

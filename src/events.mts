@@ -1,12 +1,12 @@
 import { Atom } from "@triadica/touch-control";
 import { coneBackScale } from "./config.mjs";
-import { atomMouseHoldingPaths, atomObjectsBuffer, atomObjectsTree, atomProxiedDispatch } from "./global.mjs";
+import { atomMouseHoldingPaths, atomLagopusTree, atomProxiedDispatch } from "./global.mjs";
 import isMobile from "ismobilejs";
 import { cDistance } from "./math.mjs";
 import { atomViewerScale, transform3d } from "./perspective.mjs";
-import { LagopusElement, LagopusObjectData } from "./primes.mjs";
+import { LagopusElement, LagopusObjectData, LagopusRenderObject } from "./primes.mjs";
 
-export let traverseTree = (tree: LagopusElement, coord: number[], cb: (obj: LagopusObjectData, coord: number[]) => void) => {
+export let traverseTree = (tree: LagopusRenderObject, coord: number[], cb: (obj: LagopusRenderObject, coord: number[]) => void) => {
   if (tree != null) {
     switch (tree.type) {
       case "object":
@@ -32,7 +32,7 @@ let handleScreenClick = (event: MouseEvent) => {
   let touchDeviation = isMobile ? 16 : 4;
   let hitTargetsBuffer = new Atom([]);
   let scale = atomViewerScale.deref();
-  traverseTree(atomObjectsTree.deref(), [], (obj: LagopusObjectData, coord: number[]) => {
+  traverseTree(atomLagopusTree.deref(), [], (obj: LagopusObjectData, coord: number[]) => {
     if (obj.hitRegion != null) {
       let region = obj.hitRegion;
       if (region.onHit != null) {
@@ -64,7 +64,7 @@ let handleScreenMousedown = (event: MouseEvent) => {
   let touchDeviation = isMobile ? 16 : 4;
   let hitTargetsBuffer = new Atom([]);
   let scale = atomViewerScale.deref();
-  traverseTree(atomObjectsTree.deref(), [], (obj: LagopusObjectData, coord: number[]) => {
+  traverseTree(atomLagopusTree.deref(), [], (obj: LagopusObjectData, coord: number[]) => {
     if (obj.hitRegion != null) {
       let region = obj.hitRegion;
       if (region.onMousedown != null) {
@@ -95,7 +95,7 @@ let handleScreenMousemove = (event: MouseEvent) => {
   let paths = atomMouseHoldingPaths.deref();
   if (paths.length > 0) {
     for (let p of paths) {
-      let node = loadTreeNode(atomObjectsTree.deref(), p);
+      let node = loadTreeNode(atomLagopusTree.deref(), p);
       if (node.type === "object") {
         let onMove = node.hitRegion?.onMousemove;
         if (onMove != null) {
@@ -110,7 +110,7 @@ let handleScreenMouseup = (event: MouseEvent) => {
   let paths = atomMouseHoldingPaths.deref();
   if (paths.length > 0) {
     for (let p of paths) {
-      let node = loadTreeNode(atomObjectsTree.deref(), p);
+      let node = loadTreeNode(atomLagopusTree.deref(), p);
       if (node.type === "object") {
         let onUp = node.hitRegion?.onMouseup;
         if (onUp != null) {
@@ -158,7 +158,7 @@ let findNearest = (
   }
 };
 
-let loadTreeNode = (tree: LagopusElement, path: number[]): LagopusElement => {
+let loadTreeNode = (tree: LagopusRenderObject, path: number[]): LagopusRenderObject => {
   if (path.length === 0) {
     return tree;
   } else if (tree.type === "group") {

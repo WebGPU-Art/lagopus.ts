@@ -1,6 +1,7 @@
-import queryString from "query-string";
-import { createTextureFromSource, paintLagopusTree, renderLagopusTree, resetCanvasSize } from "./render.mjs";
+import { paintLagopusTree } from "./paint.mjs";
+import { renderLagopusTree, resetCanvasSize } from "./renderer.mjs";
 import { enableBloom, initializeCanvasTextures, initializeContext } from "./initialize.js";
+import { createTextureFromSource } from "./util.mjs";
 
 import { compContainer } from "./app/container.mjs";
 import { renderControl, startControlLoop } from "@triadica/touch-control";
@@ -31,6 +32,7 @@ function renderApp() {
   let tree = compContainer(store.deref(), resources);
 
   renderLagopusTree(tree, dispatch);
+  paintLagopusTree();
 }
 
 let loadTextures = async (device: GPUDevice) => {

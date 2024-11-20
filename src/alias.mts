@@ -1,15 +1,18 @@
-import { createRenderer } from "./render.mjs";
-import { LagopusObjectData, LagopusObjectOptions, LagopusGroup } from "./primes.mjs";
+import { createRenderer } from "./renderer.mjs";
+import { LagopusObjectOptions, LagopusRenderObject } from "./primes.mjs";
 
-export let group = (options: any, ...children: any[]): LagopusGroup => {
+export let group = (options: any, ...children: any[]): LagopusRenderObject => {
   return {
     type: "group",
     children,
   };
 };
 
-/** create a render object */
-export let object = (options: LagopusObjectOptions): LagopusObjectData => {
+/**
+ * @param options.label - Identifier for the renderer (defaults to "default")
+ * @param options.computeOptions - Configuration for compute shader operations
+ */
+export let object = (options: LagopusObjectOptions): LagopusRenderObject => {
   let { attrsList, data } = options;
 
   let buffers = attrsList.map((attr) => {
@@ -18,8 +21,17 @@ export let object = (options: LagopusObjectOptions): LagopusObjectData => {
     var pointer = 0;
     for (let i = 0; i < data.length; i++) {
       let v = data[i][attr.field];
-      for (let j = 0; j < v.length; j++) {
-        buffer[pointer] = v[j];
+      if (Array.isArray(v)) {
+        if (pointer + v.length > buffer.length) {
+          throw new Error(`Buffer overflow: trying to write ${v.length} elements at position ${pointer} in buffer of length ${buffer.length}`);
+        }
+        buffer.set(v, pointer);
+        pointer += v.length;
+      } else {
+        if (pointer >= buffer.length) {
+          throw new Error(`Buffer overflow: trying to write at position ${pointer} in buffer of length ${buffer.length}`);
+        }
+        buffer[pointer] = v;
         pointer += 1;
       }
     }
@@ -32,20 +44,19 @@ export let object = (options: LagopusObjectOptions): LagopusObjectData => {
     indices = u32buffer(options.indices);
   }
 
-  let getParams = options.getParams || options.addUniform;
-
-  return createRenderer(
-    options.shader,
-    options.topology,
-    options.attrsList,
-    data.length,
-    buffers,
-    options.hitRegion,
-    indices,
-    getParams,
-    options.textures,
-    options.label || "default"
-  );
+  return createRenderer({
+    shader: options.shader,
+    topology: options.topology,
+    attrsList: options.attrsList,
+    verticesLength: data.length,
+    vertices: buffers,
+    hitRegion: options.hitRegion,
+    indices: indices,
+    getParams: options.getParams,
+    textures: options.textures,
+    label: options.label || "lagopus-object",
+    computeOptions: options.computeOptions,
+  });
 };
 
 export type NestedData<T> = NestedData<T>[] | T;

@@ -13,18 +13,22 @@ export interface LagopusAttribute {
   format: GPUVertexFormat;
 }
 
+export interface ComputeOptions {
+  particleCount: number;
+  initialBuffer: Float32Array;
+}
+
 export interface LagopusObjectOptions {
   label?: string;
   shader: string;
   topology: GPUPrimitiveTopology;
   attrsList: LagopusAttribute[];
-  data: Record<string, number[]>[];
+  data: Record<string, number | number[]>[];
   hitRegion?: LagopusHitRegion;
   indices?: number[];
   getParams?: () => number[];
-  /** @deprecated use `getParams` now */
-  addUniform?: () => number[];
   textures?: GPUTexture[];
+  computeOptions?: ComputeOptions;
 }
 
 export interface LagopusObjectData {
@@ -33,12 +37,21 @@ export interface LagopusObjectData {
   vertexBuffersDescriptors: Iterable<GPUVertexBufferLayout | null>;
   shaderModule: GPUShaderModule;
   vertexBuffers: GPUBuffer[];
-  length: number;
+  verticesLength: number;
   hitRegion?: LagopusHitRegion;
   indices?: GPUBuffer;
+  indicesCount?: number;
   getParams?: () => number[];
   textures?: GPUTexture[];
   label: string;
+  computeOptions?: ComputeOptions;
+}
+
+export interface LagopusRenderObject {
+  type: "object" | "group";
+  renderer?: (t: number, c: GPUCommandEncoder) => void;
+  children?: LagopusRenderObject[];
+  hitRegion?: LagopusHitRegion;
 }
 
 export interface LagopusGroup {
