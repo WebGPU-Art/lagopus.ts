@@ -13,3 +13,5 @@ export { onControlEvent, registerShaderResult, loadGamepadControl } from "./cont
 export { setupMouseEvents } from "./events.mjs";
 
 export { createTextureFromSource } from "./util.mjs";
+
+export { connectRetainedAtomToStorage } from "./retained-atom.mjs";
