@@ -9,7 +9,7 @@ Based on:
 
 ### Usage
 
-> Read full example in https://github.com/Triadica/lagopus-ts-workflow .
+> Read full example in https://github.com/WebGPU-Art/lagopus-ts-workflow .
 
 Defining object:
 
