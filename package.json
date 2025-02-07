@@ -1,6 +1,6 @@
 {
   "name": "@webgpu-art/lagopus",
-  "version": "0.2.0",
+  "version": "0.2.3",
   "type": "module",
   "module": "./lib/index.mjs",
   "scripts": {

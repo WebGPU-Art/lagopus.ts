@@ -12,6 +12,7 @@ import { V3 } from "./primes.mjs";
 import { atomClearColor } from "./global.mjs";
 import { isMobile, parsedQuery } from "./config.mjs";
 import { setupRemoteControl } from "./remote-control.mjs";
+import { connectRetainedAtomToStorage } from "./retained-atom.mjs";
 
 let store = new Atom({
   position: [180, 80, 80] as V3,
@@ -47,6 +48,7 @@ let loadTextures = async (device: GPUDevice) => {
 };
 
 window.onload = async () => {
+  connectRetainedAtomToStorage("lagopus.ts", { read: true });
   if (!isMobile) {
     // enableBloom();
   }

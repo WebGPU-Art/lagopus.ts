@@ -2,14 +2,17 @@ import { vCross, vDot, vScale, vAdd, vSub } from "@triadica/touch-control";
 import { coneBackScale } from "./config.mjs";
 import { Atom } from "@triadica/touch-control";
 import { V3 } from "./primes.mjs";
+import { RetainedAtom } from "./retained-atom.mjs";
 
-export let atomViewerForward = new Atom<V3>([0, 0, -1]);
+let perspectiveKey = "lagopus.perspective.";
 
-export let atomViewerPosition = new Atom<V3>([0, 0, 600]);
+export let atomViewerForward = new RetainedAtom<V3>(`${perspectiveKey}forward`, [0, 0, -1]);
 
-export let atomViewerUpward = new Atom<V3>([0, 1, 0]);
+export let atomViewerPosition = new RetainedAtom<V3>(`${perspectiveKey}position`, [0, 0, 600]);
 
-export let atomViewerScale = new Atom<number>(1);
+export let atomViewerUpward = new RetainedAtom<V3>(`${perspectiveKey}upward`, [0, 1, 0]);
+
+export let atomViewerScale = new RetainedAtom<number>(`${perspectiveKey}scale`, 1);
 
 export let moveViewerBy = (x0: number, y0: number, z0: number) => {
   let moveRatio = 1 / atomViewerScale.deref();

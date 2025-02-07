@@ -13,3 +13,12 @@ export { onControlEvent, registerShaderResult, loadGamepadControl } from "./cont
 export { setupMouseEvents } from "./events.mjs";
 
 export { createTextureFromSource } from "./util.mjs";
+
+export { connectRetainedAtomToStorage } from "./retained-atom.mjs";
+
+import triangleWgsl from "../shaders/triangle.wgsl";
+import flatButtonWgsl from "../shaders/flat-button.wgsl";
+import imageWgsl from "../shaders/image.wgsl";
+import triangleComputeWgsl from "../shaders/triangle-compute.wgsl";
+
+export { triangleWgsl, flatButtonWgsl, imageWgsl, triangleComputeWgsl };
